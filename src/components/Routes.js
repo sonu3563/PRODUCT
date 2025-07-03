@@ -60,6 +60,7 @@ import { Categoryelements } from "./pages/hr/Categories/Categoryelements";
 import Accessory from "./pages/employee/Accessory/Accessory";
 import Profile from "./pages/superadmin/Profile";
 import { useNavigate } from "react-router-dom";
+// import { PMProvider } from "./context/PMContext";
 // import EmployeeDetailHrEmployeeDetail from "./pages/hr/Employee/HrEmployeeDetail";
 const RoleBasedRoute = ({ element, allowedRoles }) => {
   // const { user } = useAuth();
@@ -68,10 +69,10 @@ const RoleBasedRoute = ({ element, allowedRoles }) => {
   // console.log("routes", user);
   if (!user) return <Navigate to="/" />;
 
-  console.log("Logged-in User:", user);
+  // console.log("Logged-in User:", user);
 
   const userRole = localStorage.getItem("user_name");
-  console.log("Extracted Role:", userRole);
+  // console.log("Extracted Role:", userRole);
 
   const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase().replace(/\s+/g, ""));
 
@@ -155,9 +156,11 @@ const AppRoutes = () => {
           <Route
             path="/superadmin/Manage-sheets"
             element={
+                    <PMProvider>
               <BDProjectsAssignedProvider>
                 <RoleBasedRoute element={<Managesheets/>} allowedRoles={["superadmin"]} />
                 </BDProjectsAssignedProvider>
+                </PMProvider>
             }
           />
 

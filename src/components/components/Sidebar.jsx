@@ -1,10 +1,10 @@
 import PropTypes from "prop-types";
 import { Link, NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useState ,useEffect } from "react";
 import { XMarkIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
 import { Roles } from "../utils/roles";
-import userimage from "../aasests/profile-img.jpg";
+// import userimage from "../aasests/profile-img.jpg";
 import {
   House,
   Users,
@@ -29,7 +29,20 @@ export function Sidebar() {
   const [openMenus, setOpenMenus] = useState({});
   const { logout } = useAuth();
   const userRole = localStorage.getItem("user_name");
+  const [userimage, setUserimage] = useState(
+  localStorage.getItem("profile_image_base64") || 'https://your-default-image-url.com/default.png'
+);
   const username = localStorage.getItem("name");
+
+useEffect(() => {
+  const storedImage = localStorage.getItem("profile_image_base64");
+  if (storedImage) {
+    setUserimage(storedImage);
+  }
+}, []);
+
+
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const menuItems = {
     [Roles.ADMIN]: [

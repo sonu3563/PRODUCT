@@ -21,7 +21,7 @@ export const Projecttable = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteclient, setDeleteclient] = useState("");
   const [editid, setEditid] = useState(null);
-  const [filterBy, setFilterBy] = useState("name"); // Default filter by name
+  const [filterBy, setFilterBy] = useState("client_name"); // Default filter by name
   const [showImportOptions, setShowImportOptions] = useState(false); // FIX: Define state
   const [editTags, setEditTags] = useState([]);
   const [searchTagQuery, setSearchTagQuery] = useState('');

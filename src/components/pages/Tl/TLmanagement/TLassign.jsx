@@ -210,7 +210,7 @@ export const TLassign = () => {
                         onClick={() => { setIsModalOpen(true); setShowMessage(false); }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm flex items-center gap-1"
                     >
-                        <BriefcaseBusiness className="h-5 w-5" /> Assign Project
+                        <BriefcaseBusiness className="h-5 w-5" /> Assign
                     </button>
                 </div>
 
@@ -326,12 +326,12 @@ export const TLassign = () => {
                                                             // setIsEmployeeDropdownOpen(false);
                                                         }}
                                                     >
-                                                        <input
+                                                        {/* <input
                                                             type="checkbox"
                                                             className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                             checked={selectedEmployees.includes(employee.id)}
                                                             readOnly
-                                                        />
+                                                        /> */}
                                                         {employee.name}
                                                     </div>
                                                 ))

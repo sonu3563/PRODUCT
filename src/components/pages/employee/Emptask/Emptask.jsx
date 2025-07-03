@@ -6,7 +6,7 @@ import { useTask } from "../../../context/TaskContext";
 import {BarChart} from 'lucide-react';
 import { SectionHeader } from '../../../components/SectionHeader';
 
-
+import DOMPurify from 'dompurify';
 
 export default function Emptask() {
   const [openTask, setOpenTask] = useState(null);
@@ -38,7 +38,7 @@ export default function Emptask() {
 
   return (
     <div>
-      <SectionHeader icon={BarChart} title="Project details222" subtitle="Track and manage your projects details efficiently with our intuitive dashboard." />
+      <SectionHeader icon={BarChart} title="Project details" subtitle="Track and manage your projects details efficiently with our intuitive dashboard." />
       <div className="flex items-center justify-center relative">
       <div className="w-full bg-white shadow-md rounded-3xl p-4">
         {empTasks.project && (
@@ -100,9 +100,10 @@ export default function Emptask() {
                       <strong>Assigned By:</strong> {empTasks.project_manager.name}
                     </p>
 
-                    <p className="text-gray-900 mt-5 leading-relaxed border-t pt-4 text-justify text-lg font-medium">
-                      {task.description}
-                    </p>
+                     <div
+                          className="prose max-w-none text-gray-900"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(task.description) }}
+                        />
                   </div>
                 )}
               </div>

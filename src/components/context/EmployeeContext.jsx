@@ -46,92 +46,98 @@ export const EmployeeProvider = ({ children }) => {
     fetchEmployees();
   }, []);
 
-  const addEmployee = async (employeeData) => {
-    try {
-      const token = localStorage.getItem("userToken");
-      const formData = new FormData();
-  
-      // Append basic fields
-      formData.append("name", employeeData.name || "");
-      formData.append("email", employeeData.email || "");
-      formData.append("password", employeeData.password || "");
-      formData.append("address", employeeData.address || "");
-      formData.append("phone_num", employeeData.phone_num || "");
-      formData.append("emergency_phone_num", employeeData.emergency_phone_num || "");
-      if (employeeData.role_id) {
-        formData.append("role_id", employeeData.role_id);
+const addEmployee = async (employeeData) => {
+  try {
+    const token = localStorage.getItem("userToken");
+    const formData = new FormData();
+
+    formData.append("name", employeeData.name || "");
+    formData.append("email", employeeData.email || "");
+    formData.append("password", employeeData.password || "");
+    formData.append("address", employeeData.address || "");
+    formData.append("phone_num", employeeData.phone_num || "");
+    formData.append("emergency_phone_num", employeeData.emergency_phone_num || "");
+    formData.append("pm_id", employeeData.pm_id || "1");
+
+    if (employeeData.role_id) {
+      formData.append("role_id", employeeData.role_id);
+    } else {
+      formData.append("roles", employeeData.roles);
+    }
+
+    if ([1, 2, 3, 4].includes(Number(employeeData.role_id))) {
+      console.log("Role requires no team, appending empty team_id");
+      formData.append("team_id", "");
+    } else {
+      if (employeeData.team_id != null) {
+        console.log("Appending team_id:", employeeData.team_id);
+        formData.append("team_id", employeeData.team_id);
       } else {
-        formData.append("roles", employeeData.roles);
+        console.log("Appending team:", employeeData.team);
+        formData.append("team", employeeData.team);
       }
-      formData.append("pm_id", employeeData.pm_id || "1");
-  
-      // ✅ Correct team_id logic
-      if (["1", "2", "3", "4"].includes(employeeData.role_id)) {
-        formData.append("team_id", "");
-      } else {
-        formData.append("team", employeeData.team_id || employeeData.team);
-      }
-  
-      // ✅ Handle profile_pic (expecting single file)
-      const images = employeeData.profile_pics || [];
-      if (images.length > 1) {
-        showAlert({
-          variant: "error",
-          title: "Upload Error",
-          message: "You can upload a maximum of 1 image.",
-        });
-        return;
-      }
-  
-      if (images.length === 1 && images[0] instanceof File) {
-        formData.append("profile_pic", images[0]);
-      }
-  
-      // Optional: log FormData contents
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-  console.log("Adding new employee with data:", formData);
-      const response = await fetch(`${API_URL}/api/users`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(JSON.stringify(errorResponse));
-      }
-  
-      const newEmployee = await response.json();
-      setEmployees((prev) => [...prev, newEmployee.data]);
-  
-      showAlert({
-        variant: "success",
-        title: "Success",
-        message: "Employee added successfully",
-      });
-  
-      setError(null);
-    } catch (err) {
-      const data = err?.response?.data || err;
-  
-      const firstError = data?.errors
-        ? Object.values(data.errors)[0][0]
-        : data?.message || "Something went wrong";
-  
+    }
+
+    const images = employeeData.profile_pics || [];
+    if (images.length > 1) {
       showAlert({
         variant: "error",
-        title: "Failed",
-        message: firstError,
+        title: "Upload Error",
+        message: "You can upload a maximum of 1 image.",
       });
-  
-      setError(err.message);
-      throw err;
+      return;
     }
-  };
+
+    if (images.length === 1 && images[0] instanceof File) {
+      formData.append("profile_pic", images[0]);
+    }
+
+    // Final output
+    console.log("Final FormData content:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    const response = await fetch(`${API_URL}/api/users`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(JSON.stringify(errorResponse));
+    }
+
+    const newEmployee = await response.json();
+    setEmployees((prev) => [...prev, newEmployee.data]);
+
+    showAlert({
+      variant: "success",
+      title: "Success",
+      message: "Employee added successfully",
+    });
+
+    setError(null);
+  } catch (err) {
+    const data = err?.response?.data || err;
+    const firstError = data?.errors
+      ? Object.values(data.errors)[0][0]
+      : data?.message || "Something went wrong";
+
+    showAlert({
+      variant: "error",
+      title: "Failed",
+      message: firstError,
+    });
+
+    setError(err.message);
+    throw err;
+  }
+};
+
   
   
 

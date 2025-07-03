@@ -152,6 +152,7 @@ export const PMassign = () => {
         setProjectSearchQuery(""); // Clear search query after submission
         setTeamLeaderSearchQuery(""); // Clear search query after submission
         setShowMessage(true);
+        setIsAssignProjectModalOpen("")
         setTimeout(() => setShowMessage(false), 3000);
         setIsModalOpen(false); // Close the assign project modal
     };
@@ -212,7 +213,7 @@ export const PMassign = () => {
                         onClick={() => { setIsAssignProjectModalOpen(true); setShowMessage(false); }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm flex items-center gap-1"
                     >
-                        <BriefcaseBusiness className="h-5 w-5" /> Assign Project
+                        <BriefcaseBusiness className="h-5 w-5" /> Assign
                     </button>
                 </div>
 
@@ -323,12 +324,12 @@ export const PMassign = () => {
                                                             // setIsDropdownOpen(false); // Keep open to select multiple
                                                         }}
                                                     >
-                                                        <input
+                                                        {/* <input
                                                             type="checkbox"
                                                             className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                             checked={selectedManagers.includes(teamleader.id)}
                                                             readOnly
-                                                        />
+                                                        /> */}
                                                         {teamleader.name}
                                                     </div>
                                                 ))
@@ -364,11 +365,11 @@ export const PMassign = () => {
                                 </div>
 
                                 {/* Success/Error Message */}
-                                {showMessage && (
+                                {/* {showMessage && (
                                     <div className={`p-3 rounded-lg text-sm font-medium text-center ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-300' : 'bg-red-50 text-red-800 border border-red-300'}`}>
                                         {message.text || "Project assigned successfully!"}
                                     </div>
-                                )}
+                                )} */}
 
                                 <SubmitButton type="submit" isSubmitting={isAssigning} buttonText="Assign Project" submittingText="Assigning..." />
                             </form>

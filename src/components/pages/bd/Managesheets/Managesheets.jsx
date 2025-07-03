@@ -4,11 +4,12 @@ import { Loader2, Calendar, User, Briefcase, Clock, FileText, Target, BarChart, 
 import { exportToExcel } from "../../../components/excelUtils";
 import { SectionHeader } from '../../../components/SectionHeader';
 import { EditButton, SaveButton, CancelButton, DeleteButton, ExportButton, ImportButton, ClearButton, IconApproveButton, IconRejectButton, YesterdayButton, TodayButton, WeeklyButton, CustomButton, IconCancelTaskButton, IconSaveButton, IconDeleteButton, IconEditButton, IconViewButton } from "../../../AllButtons/AllButtons";
-
+import { usePMContext } from "../../../context/PMContext";
 
 export const Managesheets = () => {
   const { performanceData, fetchPerformanceDetails, isLoading, approvePerformanceSheet, rejectPerformanceSheet } = useBDProjectsAssigned();
   const [searchTerm, setSearchTerm] = useState("");
+  const {getPerformanceDetails,pmperformanceData} = usePMContext();
   const [filteredData, setFilteredData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [editMode, setEditMode] = useState({});
@@ -16,6 +17,10 @@ export const Managesheets = () => {
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBy, setFilterBy] = useState("client_name"); // Default filter by name
+const [userRole, setUserRole] = useState("");
+// const isSuperAdmin = userRole === "superadmin";
+
+
 
   // const [startDate, setStartDate] = useState(() => {
   //   const yesterday = new Date();
@@ -41,6 +46,7 @@ export const Managesheets = () => {
 
   const [startDate, setStartDate] = useState(getYesterday);
   const [endDate, setEndDate] = useState(getYesterday);
+  
 
   useEffect(() => {
     const yesterday = getYesterday();
@@ -55,60 +61,88 @@ export const Managesheets = () => {
     setFilterBy("name");
   };
 
-  useEffect(() => {
+useEffect(() => {
+  const role = localStorage.getItem("user_name");
+  setUserRole(role);
+
+  if (role === "superadmin") {
     fetchPerformanceDetails();
-  }, []);
+  } else {
+    getPerformanceDetails();
+  }
+}, []);
+
+
 
 
   const toggleEditMode = (id) => {
     setEditMode((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+useEffect(() => {
+const isSuperAdmin = userRole === "superadmin";
+const dataToUse = isSuperAdmin ? performanceData : pmperformanceData;
 
-  useEffect(() => {
-  if (!Array.isArray(performanceData) || performanceData.length === 0) {
-    console.warn("⚠️ Performance data is empty or invalid:", performanceData);
+
+  const dataReady = Array.isArray(dataToUse) && dataToUse.length > 0;
+  if (!dataReady) {
     setFilteredData([]);
     return;
   }
 
-  let filtered = performanceData.flatMap(user =>
-    user.sheets.map(sheet => ({
-      ...sheet,
-      user_name: user.user_name,
-    }))
-  );
+  let filtered;
 
-  // **Apply Date Filter**
+  if (isSuperAdmin) {
+    // 🧩 Superadmin data has nested sheets
+    filtered = dataToUse.flatMap(user =>
+      (user?.sheets || []).map(sheet => ({
+        ...sheet,
+        user_name: user.user_name,
+      }))
+    );
+  } else {
+    // 🧩 PM data is already flat
+    filtered = dataToUse.map(sheet => ({
+      ...sheet,
+      user_name: sheet.user_name, // Already has user_name in sheet
+    }));
+  }
+
+  // 🗓️ Date Filter
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-
     const startStr = start.toISOString().split("T")[0];
     const endStr = end.toISOString().split("T")[0];
 
     filtered = filtered.filter(sheet => {
       if (!sheet.date) return false;
-
       const sheetDateStr = sheet.date.split("T")[0];
       return sheetDateStr >= startStr && sheetDateStr <= endStr;
     });
   }
 
-  // ✅ Trim searchTerm once
+  // 🔍 Search Filter
   const trimmedSearchQuery = searchQuery?.trim().toLowerCase();
-
   if (trimmedSearchQuery) {
     filtered = filtered.filter(sheet => {
       const value = (sheet[filterBy] || "").toLowerCase();
       return value.includes(trimmedSearchQuery);
     });
   }
-  
-
-  console.log("Filtered Data:", filtered); // Debugging
 
   setFilteredData(filtered);
-}, [searchQuery, filterBy, startDate, endDate, performanceData]);
+}, [
+  searchQuery,
+  filterBy,
+  startDate,
+  endDate,
+  performanceData,
+  pmperformanceData,
+  userRole,
+]);
+
+
+
 
 
 
@@ -147,30 +181,37 @@ export const Managesheets = () => {
   const allSheets = searchTerm ? filteredData : performanceData.flatMap(user => user.sheets);
   const isDateFiltered = filteredData.length > 0;
 
-  const paginatedData = () => {
-    const isFilterApplied = searchTerm || startDate || endDate;
+const paginatedData = () => {
+  const isFilterApplied = searchTerm || startDate || endDate;
+  const isSuperAdmin = userRole === "superadmin"; // ✅ Declare it here again
 
-    const dataToDisplay = isFilterApplied
-      ? filteredData // Show filtered even if it's empty
-      : performanceData.flatMap((user) =>
-        user.sheets.map((sheet) => ({
+  const dataToDisplay = isFilterApplied
+    ? filteredData
+    : isSuperAdmin
+    ? performanceData.flatMap((user) =>
+        (user?.sheets || []).map((sheet) => ({
           ...sheet,
           user_name: user.user_name,
         }))
-      );
+      )
+    : pmperformanceData;
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return dataToDisplay.slice(startIndex, endIndex);
-  };
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return dataToDisplay.slice(startIndex, endIndex);
+};
+
 
   const isFilterApplied = searchTerm || startDate || endDate;
+const isSuperAdmin = userRole === "superadmin"; // ✅ Declare here too
+const totalPages = Math.ceil(
+  (isFilterApplied
+    ? filteredData.length
+    : isSuperAdmin
+    ? performanceData.reduce((acc, user) => acc + user.sheets.length, 0)
+    : pmperformanceData.length) / itemsPerPage
+);
 
-  const totalPages = Math.ceil(
-    (isFilterApplied
-      ? filteredData.length
-      : performanceData.reduce((acc, user) => acc + user.sheets.length, 0)) / itemsPerPage
-  );
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-md max-h-screen overflow-y-auto">
@@ -189,11 +230,11 @@ export const Managesheets = () => {
         </div> */}
 
 
- <div className="flex flex-wrap md:flex-nowrap items-center gap-3 border p-2 rounded-lg shadow-md bg-white w-2/5">
+ <div className="flex flex-wrap md:flex-nowrap items-center gap-3 border p-2 rounded-lg shadow-md bg-white ">
   
 
        
-                 <div className="flex  items-center w-full border border-gray-300 px-2 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                 <div className="flex  items-center  border border-gray-300 px-2 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
                    <Search className="h-5 w-5 text-gray-400 mr-[5px]" />
                    <input
                      type="text"
@@ -277,12 +318,14 @@ export const Managesheets = () => {
                 }}
               />
 
-            <CancelButton onClick={() => {
-                  setIsCustomMode(false);
-                  setSearchTerm("");
-                  setStartDate("");
-                  setEndDate("");
-                }}/>
+      <CancelButton onClick={() => {
+  const yesterday = getYesterday();
+  setIsCustomMode(false);
+  setSearchTerm("");
+  setStartDate(yesterday);
+  setEndDate(yesterday);
+}} />
+
             </>
           )}
 

@@ -259,7 +259,7 @@ const newEntry = {
 localStorage.removeItem("savedTimesheetEntries");
 
     } catch (error) {
-      alert("Failed to submit entries for approval.");
+      // alert("Failed to submit entries for approval.");
       showAlert({ variant: "error", title: "Error", message: "Failed to submit entries for approval." });
     } finally {
       setSubmitting(false);

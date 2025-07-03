@@ -115,6 +115,8 @@ export const BDProjectsAssignedProvider = ({ children }) => {
     }
 };
 const fetchPerformanceDetails = async () => {
+      console.log("hello i am comming fetchPerformanceDetails  ")
+
   setIsLoading(true);
   try {
     const response = await axios.get(`${API_URL}/api/get-all-performa-sheets`, {
@@ -281,7 +283,7 @@ const removeProjectManagers = async (project_id, manager_ids) => {
     fetchProjectManagers();
     fetchPerformanceDetails();
   }, []);
-  return (
+  return (     
     <BDProjectsAssignedContext.Provider value={{ 
       projects, 
       projectManagers, 

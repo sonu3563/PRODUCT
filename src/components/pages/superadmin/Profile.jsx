@@ -9,7 +9,8 @@ const Profile = () => {
     phone: '',
     emergencyPhone: '',
     address: '',
-    image: null,
+    imageFile: null, // New: To store the actual File object for submission
+    imageUrl: null,  // New: To store the URL for displaying the image
     role: '',
     team: '',
   });
@@ -28,8 +29,9 @@ const Profile = () => {
         emergencyPhone: profile.data.emergency_phone_num || '',
         address: profile.data.address || '',
         image: profile.data.profile_pic
-          ? `${process.env.REACT_APP_API_BASE_URL}/storage/profile/${profile.data.profile_pic}`
+          ? `http://13.60.180.240/api/storage/profile_pics/${profile.data.profile_pic}`
           : null,
+        imageFile: null,
         role: profile.data.role?.name || '',
         team: profile.data.team?.name || '',
       };
@@ -47,6 +49,7 @@ const Profile = () => {
         [name]: value,
       }));
     }
+    fetchProfile();
   };
 
   const handleImageChange = (e) => {
@@ -54,37 +57,48 @@ const Profile = () => {
     if (file && isEditable) {
       setProfileData((prev) => ({
         ...prev,
-        image: URL.createObjectURL(file),
+        imageFile: file, // Store the actual File object for submission
+        imageUrl: URL.createObjectURL(file), // Store the temporary URL for immediate preview
       }));
     }
   };
 
   const userId = localStorage.getItem("user_id");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      await updateEmployee(userId, {
-        name: profileData.name,
-        email: profileData.email,
-        phone_num: profileData.phone,
-        emergency_phone_num: profileData.emergencyPhone,
-        address: profileData.address,
-        profile_pic: profileData.image instanceof File ? profileData.image : null,
+  try {
+    await updateEmployee(userId, {
+      name: profileData.name,
+      email: profileData.email,
+      phone_num: profileData.phone,
+      emergency_phone_num: profileData.emergencyPhone,
+      address: profileData.address,
+      profile_pic: profileData.imageFile,
+      role_id: profile.data.role_id,
+      team_id: profile.data.team_id,
+      pm_id: profile.data.pm_id,
+    });
 
-        role_id: profile.data.role_id,
-        team_id: profile.data.team_id,
-        pm_id: profile.data.pm_id,
-      });
-      localStorage.setItem("name", profileData.name);
+    localStorage.setItem("name", profileData.name);
 
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Something went wrong!');
+    // If a new image was selected, store it in localStorage as Base64
+    if (profileData.imageFile) {
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        localStorage.setItem("profile_image_base64", reader.result);
+      };
+      reader.readAsDataURL(profileData.imageFile);
     }
-  };
+
+    // Optionally: show a success message
+    // alert('Profile updated successfully!');
+  } catch (error) {
+    console.error('Failed to update profile:', error);
+    alert('Something went wrong!');
+  }
+};
 
   useEffect(() => {
     fetchProfile();
@@ -120,14 +134,25 @@ const Profile = () => {
               <div className="flex justify-center mb-8">
                 <div className="relative group">
                   <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <img
+                  <img
+                 src={
+  profileData.imageUrl ||
+  profileData.image ||
+                        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&h=256&q=80'
+}
+/>
+
+
+   {/* <img
                       src={
                         profileData.image ||
                         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&h=256&q=80'
                       }
                       alt="Profile"
                       className="w-full h-full object-cover"
-                    />
+                    /> */}
+
+
                     {isEditable && (
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">

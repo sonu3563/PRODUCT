@@ -10,7 +10,7 @@ export const PMProvider = ({ children }) => {
   const [message, setMessage] = useState("");
   const token = localStorage.getItem("userToken");
   const [isAssigning, setIsAssigning] = useState(false);
-  const [performanceData, setPerformanceData] = useState(null);
+  const [pmperformanceData, setPmPerformanceData] = useState(null);
   const [teamleaders, setTeamleaders] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,7 @@ console.log("assigned", assignedProjects);
     }
   };
   const getPerformanceDetails = async () => {
+    console.log("hello i am comming getPerformanceDetails pm ")
     setLoading(true);
     setError(null);
     try {
@@ -42,7 +43,9 @@ console.log("assigned", assignedProjects);
           "Content-Type": "application/json",
         },
       });
-      setPerformanceData(response.data);
+      setPmPerformanceData(response.data.data);
+                    console.log("2 response",response.data.data);
+
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     } finally {
@@ -98,6 +101,7 @@ console.log("assigned", assignedProjects);
             throw new Error("Failed to fetch employees");
         }
         const data = await response.json();
+        console.log("teams assigned to pm",data);
         setTeamleaders(data.employees || []); 
     } catch (err) {
         setError(err.message);
@@ -176,7 +180,7 @@ console.log("assigned", assignedProjects);
     fetchEmployeeProjects();
   }, []);
   return (
-    <PMContext.Provider value={{ employeeProjects, fetchEmployeeProjects, performanceData, loading, error, getPerformanceDetails, assignProjectToTl, isAssigning, teamleaders, fetchtls, assignedProjects, isLoading, message, fetchAssignedProjects,deleteTeamLeader }}>
+    <PMContext.Provider value={{ employeeProjects, fetchEmployeeProjects, pmperformanceData, loading, error, getPerformanceDetails, assignProjectToTl, isAssigning, teamleaders, fetchtls, assignedProjects, isLoading, message, fetchAssignedProjects,deleteTeamLeader }}>
       {children}
     </PMContext.Provider>
   );
