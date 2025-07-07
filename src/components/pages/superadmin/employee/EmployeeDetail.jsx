@@ -155,19 +155,16 @@ const EmployeeDetail = () => {
 
 
   
-  const handleProjectChange = (e) => {
+ const handleProjectChange = (e) => {
     const selectedName = e.target.value;
     setSelectedProject(selectedName);
-
     const selected = projects.find(p => (p.project_name || 'Unnamed Project') === selectedName);
     if (!selected) return setPieChartData({});
-
     const types = ['Billable', 'Non Billable', 'inhouse', 'Learning (R&D)', 'No Work'];
     const data = types.map(type => {
-      const act = selected.activities.find(a => a.activity_type?.toLowerCase() === type.toLowerCase());
+      const act = selected.activities.find(a => typeof a.activity_type === 'string' && a.activity_type.toLowerCase() === type.toLowerCase());
       return act ? parseFloat(act.total_hours.split(":")[0]) + parseFloat(act.total_hours.split(":")[1]) / 60 : 0;
     });
-
     // Consistent color mapping for pie chart
     const pieColors = [
       chartColors.primaryBlue,
@@ -176,7 +173,6 @@ const EmployeeDetail = () => {
       chartColors.green,
       chartColors.orange
     ];
-
     setPieChartData({
       labels: types,
       datasets: [{
