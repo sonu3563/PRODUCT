@@ -30,7 +30,7 @@ export function Sidebar() {
   const { logout } = useAuth();
   const userRole = localStorage.getItem("user_name");
   const [userimage, setUserimage] = useState(
-  localStorage.getItem("profile_image_base64") || 'https://your-default-image-url.com/default.png'
+  localStorage.getItem("profile_image_base64") || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
 );
   const username = localStorage.getItem("name");
 
@@ -66,9 +66,11 @@ useEffect(() => {
       { name: "Clients", path: "/billingmanager/clients", icon: <Handshake /> },
       { name: "Projects", path: "/billingmanager/projects", icon: <Folders/> },
       { name: "Teams", path: "/billingmanager/teams", icon: <Users /> },
+                  { name: "employee Management", path: "/billingmanager/users", icon: <User /> },
+
       { name: "Project Assigned", path: "/billingmanager/projects-assigned", icon: <FileSpreadsheet />  },
       { name: "Manage Sheets", path: "/billingmanager/Manage-sheets", icon: <FileChartLine />},
-      
+
     ],
     [Roles.HR]: [
       { name: "Dashboard", path: "/hr/dashboard", icon: <House /> },
@@ -117,7 +119,7 @@ useEffect(() => {
       userRole === 'team' ? '/team/profile' :
       userRole === 'admin' ? '/admin/profile' :
       userRole === 'hr' ? '/hr/profile' :
-      userRole === 'billingmanager' ? '/billing/profile' :
+      userRole === 'billingmanager' ? '/billingmanager/profile' :
       userRole === 'projectmanager' ? '/projectmanager/profile' :
       userRole === 'tl' ? '/tl/profile' :
       '/profile'

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, Check, Plus, Pencil } from 'lucide-react';
 import { useProfile } from '../../context/ProfileContext';
 import { useEmployees } from "../../context/EmployeeContext";
+import defaultpic from "../../aasests/default.png"
 const Profile = () => {
   const [profileData, setProfileData] = useState({
     name: '',
@@ -138,8 +139,7 @@ const handleSubmit = async (e) => {
                  src={
   profileData.imageUrl ||
   profileData.image ||
-                        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&h=256&q=80'
-}
+{defaultpic}}
 />
 
 

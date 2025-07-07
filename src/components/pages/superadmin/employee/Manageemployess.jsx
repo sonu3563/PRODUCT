@@ -3,11 +3,12 @@ import { useEmployees } from "../../../context/EmployeeContext";
 import { useTeam } from "../../../context/TeamContext";
 import { useRole } from "../../../context/RoleContext";
 import { useAlert } from "../../../context/AlertContext";
-import { FaFileExcel, FaGoogle } from "react-icons/fa";
+import { FaFileCsv, FaGoogle } from "react-icons/fa";
 import user_profile from "../../../aasests/profile-img.jpg";
 import user_profile_bg_2 from "../../../aasests/user-profile-bg-2.jpg";
 import { BarChart, Search ,Eye, EyeOff } from "lucide-react";
-
+import { Loader } from "lucide-react";
+import { useImport } from "../../../context/Importfiles.";
 import { SectionHeader } from '../../../components/SectionHeader';
 import { exportToExcel, importFromExcel, useImportEmployees, fetchGoogleSheetData } from "../../../components/excelUtils";
 import { CancelButton, ExportButton, SaveChangeButton, ImportButton, ClearButton, IconDeleteButton, IconEditButton, IconViewButton } from "../../../AllButtons/AllButtons";
@@ -21,13 +22,22 @@ const EmployeeManagement = () => {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [importType, setImportType] = useState(null);
+    const [userrole, setUserrole] = useState("");
   const [showImportOptions, setShowImportOptions] = useState(false);
   const [filterBy, setFilterBy] = useState("name");
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
-  const { importEmployees } = useImportEmployees();
+const { importEmployees , loading1 } = useImportEmployees();
+const [selectedFile, setSelectedFile] = useState(null);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+ const {
+    importClientData,
+    importProjectData,
+    importEmployeeData,
+    importLoading,
+  } = useImport();
 
 
 
@@ -272,7 +282,9 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
   }, []); // Depend on nothing for initial fetch
 
   useEffect(() => {
-    console.log("Updated Roles:", roles);
+      const userRole = localStorage.getItem("user_name");
+setUserrole(userRole);
+    console.log("Updated Roles:", userRole);
   }, [roles]);
 
   const employeeList = Array.isArray(employees) ? employees : [];
@@ -286,16 +298,30 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
   };
 
   const handleViewEmployeeDetail = (employee) => {
-    navigate(`/superadmin/users/${employee.id}`, { state: { employee } });
+    navigate(`/${userrole}/users/${employee.id}`, { state: { employee } });
   };
+
+const handleSubmit = async () => {
+    if (!selectedFile) return;
+    try {
+      await importEmployeeData(selectedFile); // change to appropriate import function
+      setImportType(""); // close modal on success
+    } catch (error) {
+      // error handled by context's showAlert already
+    }
+  };
+
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white !shadow-md max-h-screen overflow-y-auto">
       <SectionHeader icon={BarChart} title="Employee Management" subtitle="Manage employees and update details" />
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 sticky top-0 bg-white z-10 shadow-md">
+{userrole !== "billingmanager" && (
+
         <button onClick={openModal} className="add-items-btn">
           Add Employee
         </button>
+  )}
         {/* Search & Filter */}
         <div className="flex flex-wrap md:flex-nowrap items-center gap-3 border p-2 rounded-lg shadow-md bg-white">
           <div className="flex items-center w-full border border-gray-300 px-2 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
@@ -338,11 +364,11 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                       }}
                       className="flex items-center justify-center gap-3 w-full px-4 py-3 text-gray-700 border rounded-md hover:bg-gray-100 transition"
                     >
-                      <FaFileExcel className="text-green-600 text-xl" />
-                      <span>Import Excel</span>
+                      <FaFileCsv className="text-green-600 text-xl" />
+              <span>Import Csv File</span>
                     </button>
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         setImportType("googleSheet");
                         setShowImportOptions(false);
@@ -351,7 +377,7 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                     >
                       <FaGoogle className="text-blue-500 text-xl" />
                       <span>Import Google Sheet</span>
-                    </button>
+                    </button> */}
 
                     <CancelButton onClick={() => setShowImportOptions(false)} />
                   </div>
@@ -362,20 +388,37 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
         </div>
 
         {/* Dynamic Import Section */}
-        {importType === "excel" && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
-            <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3">
-              <p className="text-gray-700 font-medium">Upload an Excel File:</p>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleImport}
-                className="px-3 py-2 border rounded-md cursor-pointer"
-              />
-              <CancelButton onClick={() => setImportType("")} />
-            </div>
+      {importType === "excel" && (
+       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+        {!importLoading ? (
+          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3 w-96">
+            <p className="text-gray-700 font-medium">Upload an Csv File:</p>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              className="px-3 py-2 border rounded-md cursor-pointer"
+            />
+
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              disabled={!selectedFile}
+            >
+              Upload
+            </button>
+
+            <CancelButton onClick={() => setImportType("")} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="animate-spin text-white w-10 h-10" />
+            <p className="text-white text-lg font-medium">Importing Employees...</p>
           </div>
         )}
+      </div>
+      )}
+
 
         {importType === "googleSheet" && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
@@ -449,6 +492,9 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                           View
                         </span>
                       </div>
+{userrole !== "billingmanager" && (
+
+
                       <div className="relative group">
                             <IconEditButton onClick={() => handleEditEmployee(employee)} />
                             <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 
@@ -457,7 +503,9 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                                   Edit
                           </span>
                       </div>
+  )}
                     {/* <IconDeleteButton onClick={() => handleDeleteEmployee(employee.id)} /> */}
+                 {userrole !== "billingmanager" && (
                       <div className="relative group">
                             <IconDeleteButton
                               onClick={() => {
@@ -471,6 +519,7 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                                   Delete
                           </span>
                       </div>
+                 )}
                   </td>
                 </tr>
               ))
@@ -1186,12 +1235,15 @@ const [employeeToDelete, setEmployeeToDelete] = useState(null);
                 </p>
               )} */}
 
+
+
               <button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg transform transition-all duration-300 ease-in-out active:scale-95 text-lg"
               >
                 Add Employee
               </button>
+
             </form>
           </div>
         </div>

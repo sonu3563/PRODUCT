@@ -106,7 +106,7 @@ export const Teamtable = () => {
             />
           </div>
           <ClearButton onClick={handleClearSearch} />
-          <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} />
+          {/* <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} /> */}
           {/* <ExportButton onClick={() => exportToExcel(filteredTeams, "teams.xlsx")} /> */}
           <ExportButton
               onClick={() => {

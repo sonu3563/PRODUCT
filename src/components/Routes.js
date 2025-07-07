@@ -60,16 +60,19 @@ import { Categoryelements } from "./pages/hr/Categories/Categoryelements";
 import Accessory from "./pages/employee/Accessory/Accessory";
 import Profile from "./pages/superadmin/Profile";
 import { useNavigate } from "react-router-dom";
+import NotFound from "./components/NotFound";
+import { ImportProvider } from "./context/Importfiles.";
+import RedirectToDashboard from "./components/RedirectToDashboard";
 // import { PMProvider } from "./context/PMContext";
 // import EmployeeDetailHrEmployeeDetail from "./pages/hr/Employee/HrEmployeeDetail";
 const RoleBasedRoute = ({ element, allowedRoles }) => {
   // const { user } = useAuth();
   const user = localStorage.getItem("userData");
-    
+    // console.log("userdata",user);
   // console.log("routes", user);
   if (!user) return <Navigate to="/" />;
 
-  // console.log("Logged-in User:", user);
+  console.log("Logged-in User:", user);
 
   const userRole = localStorage.getItem("user_name");
   // console.log("Extracted Role:", userRole);
@@ -90,7 +93,13 @@ const AppRoutes = () => {
   const navigate = useNavigate();
   const location = useLocation(); // Get current route
 
-
+// const hideSidebarRoutes = ["/"]; // Add more public routes if needed
+// const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname);
+ 
+    // console.log("role 1212121221",role);
+const hideSidebarRoutes = ["/"]; // Add more public routes if needed
+const hasRole = !!localStorage.getItem("user_name"); // Check if any role is present
+const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && hasRole;
 
 
 
@@ -98,17 +107,21 @@ const AppRoutes = () => {
 
   return (
     // <AlertProvider>
-    <AuthProvider>
+    <AuthProvider>  
+              <ImportProvider>
     <div className="flex">
 
-      <Sidebar />
+    {shouldShowSidebar && <Sidebar />}
  
-      <div className="flex-1 w-full ml-72 py-2.5  px-4 overflow-hidden">
+<div className={`flex-1 w-full ${shouldShowSidebar ? "ml-72" : ""} py-2.5 px-4 overflow-hidden`}>
         <Routes>
+  
           <Route
             path="/admin/dashboard"
             element={<RoleBasedRoute element={<AdminDashboard />} allowedRoles={["admin"]} />}
           />
+<Route path="/" element={<RedirectToDashboard />} />
+
           <Route
             path="/superadmin/dashboard"
             element={<RoleBasedRoute element={<SuperAdminDashboard />} allowedRoles={["superadmin"]} />}
@@ -225,6 +238,22 @@ const AppRoutes = () => {
             element={<RoleBasedRoute element={<EmployeeDetail />} allowedRoles={["superadmin"]} />}
           />
           
+
+ <Route
+            path="/hr/users/:id"
+            element={<RoleBasedRoute element={<EmployeeDetail />} allowedRoles={["hr"]} />}
+          />
+
+ <Route
+            path="/billingmanager/users/:id"
+            element={<RoleBasedRoute element={<EmployeeDetail />} allowedRoles={["billingmanager"]} />}
+          />
+
+   <Route
+            path="/billingmanager/users"
+            element={<RoleBasedRoute element={<Employeelayout />} allowedRoles={["billingmanager"]} />}
+          />
+          
           <Route
 
             path="/billingmanager/projects/projects-detail/:project_id"
@@ -264,7 +293,9 @@ const AppRoutes = () => {
             path="/billingmanager/manage-sheets"
             element={
               <BDProjectsAssignedProvider>
+                <PMProvider>
                 <RoleBasedRoute element={<Managesheets/>} allowedRoles={["billingmanager"]} />
+                </PMProvider>
                 </BDProjectsAssignedProvider>
             }
           />
@@ -542,10 +573,12 @@ const AppRoutes = () => {
               />
             }
           />
+  <Route path="*" element={<NotFound />} />
 
           </Routes>
       </div>
     </div>
+    </ImportProvider>
     </AuthProvider>
     // </AlertProvider>
 

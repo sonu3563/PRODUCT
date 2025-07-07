@@ -3,13 +3,13 @@ import { useClient } from "../../../context/ClientContext";
 import { Edit, Save, Trash2, Loader2, BarChart, Search } from "lucide-react";
 import { exportToExcel, importFromExcel, useImportClients, fetchGoogleSheetData } from "../../../components/excelUtils";
 import { Clients } from './Clients'
-import { FaFileExcel, FaGoogle } from "react-icons/fa";
+import { FaFileCsv, FaGoogle } from "react-icons/fa";
 import { SectionHeader } from '../../../components/SectionHeader';
 import { EditButton, SaveButton, CancelButton, ClearButton, ImportButton, ExportButton, YesButton, DeleteButton, IconApproveButton, IconRejectButton, IconCancelTaskButton, IconSaveButton, IconDeleteButton, IconEditButton } from "../../../AllButtons/AllButtons";
 import Pagination from "../../../components/Pagination";
-
-
-
+import { useAlert } from "../../../context/AlertContext";
+import { useImport } from "../../../context/Importfiles.";
+import { Loader } from "lucide-react";
 export const Clienttable = () => {
   const { clients, fetchClients, isLoading, editClient, deleteClient } = useClient();
   const [editClientId, setEditClientId] = useState(null);
@@ -28,9 +28,15 @@ export const Clienttable = () => {
   const [importType, setImportType] = useState(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [deleteclient, setDeleteclient] = useState("");
+
+  const [selectedFile, setSelectedFile] = useState(null); // <-- This was missing
+
+
   const [editid, setEditid] = useState(null);
-   const { importClients } = useImportClients()
-  const [currentPage, setCurrentPage] = useState(1);
+    const { showAlert } = useAlert();
+
+ const { importClients ,loading } = useImportClients(); 
+   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
   console.log("clients fetched", clients);
@@ -66,13 +72,21 @@ export const Clienttable = () => {
     setCurrentPage(1);
   }, [searchQuery, filterBy, selectedClientType]);
   
-  const handleGoogleSheetImport = () => {
-    if (!googleSheetUrl) {
-      alert("Please enter a Google Sheets link.");
-      return;
-    }
-    fetchGoogleSheetData(googleSheetUrl, importClients);
-  };
+const handleGoogleSheetImport = async () => {
+  if (!googleSheetUrl) {
+    alert("Please enter a Google Sheets link.");
+    return;
+  }
+
+  try {
+    await fetchGoogleSheetData(googleSheetUrl, importClients); // make sure this returns a Promise
+    setShowImportOptions("");
+    setImportType("");
+  } catch (error) {
+    console.error("Google Sheet import failed:", error);
+  }
+};
+
 
   // const handleImport = async (e) => {
   //   const file = e.target.files[0];
@@ -83,8 +97,39 @@ export const Clienttable = () => {
   //     importEmployees(data); // ✅ Add employees to the system
   //   });
   // };
+ const {
+    importClientData,
+    importProjectData,
+    importEmployeeData,
+    importLoading,
+  } = useImport();
 
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
 
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    try {
+
+        await importClientData(selectedFile);
+      
+      setImportType(""); // close modal on success
+    } catch (err) {
+      console.error("Import failed:", err);
+    }
+  };
+
+const handleSubmit = async () => {
+    if (!selectedFile) return;
+    try {
+      await importEmployeeData(selectedFile); // change to appropriate import function
+      setImportType(""); // close modal on success
+    } catch (error) {
+      // error handled by context's showAlert already
+    }
+  };
 
   // const handleEditClick = (client) => {
   //   setEditClientId(client.id);
@@ -102,20 +147,29 @@ export const Clienttable = () => {
   };
 
 
-  const handleEditClick = (client) => {
-    setEditingClient(client.id);
-    setEditedData({
-      name: client.name,
-      hire_on_id: client.hire_on_id || "",
-      hire_through: client.hire_through || "",
-      contact_detail: client.contact_detail || "",
-      company_name: client.company_name || "",
-      company_address: client.company_address || "",
-      project_type: client.project_type || "",
-      communication: client.communication || "",
-      client_type: client.client_type,
-    });
-  };
+const handleEditClick = async (client) => {
+  setEditingClient(client.id);
+  setEditedData({
+    name: client.name,
+    hire_on_id: client.hire_on_id || "",
+    hire_through: client.hire_through || "",
+    client_email: client.client_email || "",
+      client_number: client.client_number || "",
+        // contact_detail: client.client_detail || "",
+    company_name: client.company_name || "",
+    company_address: client.company_address || "",
+    project_type: client.project_type || "",
+    communication: client.communication || "",
+    client_type: client.client_type,
+  });
+
+  // Simulate some async logic if needed (e.g., API call or state sync)
+  await new Promise(resolve => setTimeout(resolve, 100)); // optional
+
+  // Reset after edit is handled
+  setShowImportOptions("");
+  setImportType("");
+};
 
 
 
@@ -149,15 +203,16 @@ export const Clienttable = () => {
     });
   };
 
-    const handleImport = async () => {
-      // const file = e.target.files[0];
-      // if (!file) return;
-  
-      importFromExcel((data) => {
-        console.log("Imported Data (Before adding to system):", data);
-        importClients(data);
-      });
-    };
+// const handleImport = (e) => {
+//   const file = e.target.files[0];
+//   if (!file) return;
+
+//   importFromExcel(file, (data) => {
+//     console.log("✅ Final Imported Data:", data);
+//     importClients(data);
+//   }, showAlert); // ✅ showAlert passed as third argument
+// };
+
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-md max-h-screen overflow-y-auto">
@@ -215,7 +270,8 @@ export const Clienttable = () => {
             <option value="name">Client Name</option>
             <option value="hire_on_id">Hiring Id</option>
             {/* <option value="id">Hiring Platform</option> */}
-             <option value="contact_detail">Contact Details</option>
+             <option value="client_email">Contact Email</option>
+              <option value="client_number">Contact Number</option>
             <option value="project_type">Project Type</option> 
           </select>
 
@@ -245,7 +301,11 @@ export const Clienttable = () => {
                 {filteredEmployees?.some(client => client.client_type === "Hired on Upwork") && (
                   <th className="px-4 py-2 font-medium text-sm">Hiring Id</th>
                 )}
-                <th className="px-4 py-2 font-medium text-sm text-center">Contact Details</th>
+                {/* <th className="px-4 py-2 font-medium text-sm text-center">Contact Details</th> */}
+                                <th className="px-4 py-2 font-medium text-sm text-center">Contact E-mail</th>
+
+                <th className="px-4 py-2 font-medium text-sm text-center">Contact Number</th>
+
                 {filteredEmployees?.some(client => client.client_type === "Direct") && (
                   <>
                     <th className="px-4 py-2 font-medium text-sm">Company Name</th>
@@ -304,14 +364,27 @@ export const Clienttable = () => {
                       {editingClient === client.id ? (
                         <input
                           type="text"
-                          value={editedData.contact_detail}
-                          onChange={(e) => handleInputChange(e, "contact_detail")}
+                          value={editedData.client_email}
+                          onChange={(e) => handleInputChange(e, "client_email")}
                           className="border p-1 w-full"
                         />
                       ) : (
-                        client.contact_detail
+                        client.client_email
                       )}
                     </td>
+   <td className="px-6 py-4 text-gray-600 text-sm text-center">
+                      {editingClient === client.id ? (
+                        <input
+                          type="text"
+                          value={editedData.client_number}
+                          onChange={(e) => handleInputChange(e, "client_number")}
+                          className="border p-1 w-full"
+                        />
+                      ) : (
+                        client.client_number
+                      )}
+                    </td>
+
 
                     {client.client_type === "Direct" && (
                       <>
@@ -480,11 +553,11 @@ export const Clienttable = () => {
               }}
               className="flex items-center justify-center gap-3 w-full px-4 py-3 text-gray-700 border rounded-md hover:bg-gray-100 transition"
             >
-              <FaFileExcel className="text-green-600 text-xl" />
-              <span>Import Excel</span>
+              <FaFileCsv className="text-green-600 text-xl" />
+              <span>Import Csv File</span>
             </button>
 
-            <button
+            {/* <button
               onClick={() => {
                 setImportType("googleSheet");
                 setShowImportOptions(false);
@@ -493,7 +566,7 @@ export const Clienttable = () => {
             >
               <FaGoogle className="text-blue-500 text-xl" />
               <span>Import Google Sheet</span>
-            </button>
+            </button> */}
 
             {/* <button
               onClick={() => setShowImportOptions(false)}
@@ -507,25 +580,34 @@ export const Clienttable = () => {
       )}
 
       {importType === "excel" && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
-          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3">
-            <p className="text-gray-700 font-medium">Upload an Excel File:</p>
+       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+        {!importLoading ? (
+          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3 w-96">
+            <p className="text-gray-700 font-medium">Upload an Csv File:</p>
             <input
               type="file"
               accept=".xlsx, .xls"
-               onChange={handleImport}
+              onChange={(e) => setSelectedFile(e.target.files[0])}
               className="px-3 py-2 border rounded-md cursor-pointer"
             />
-            {/* <button
-              onClick={() => setImportType("")}
-              className="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              disabled={!selectedFile}
             >
-              Cancel
-            </button> */}
+              Upload
+            </button>
+
             <CancelButton onClick={() => setImportType("")} />
           </div>
-
-        </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="animate-spin text-white w-10 h-10" />
+            <p className="text-white text-lg font-medium">Importing Employees...</p>
+          </div>
+        )}
+      </div>
       )}
 
       {importType === "googleSheet" && (
@@ -593,6 +675,7 @@ export const Clienttable = () => {
           </div>
         </div>
       )}
+      
     </div>
   );
 };

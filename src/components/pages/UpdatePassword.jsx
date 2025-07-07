@@ -8,7 +8,8 @@ import axios from "axios";
 import { useAlert } from '../context/AlertContext';
 import  { useState } from "react";
 import {
-    Loader2
+    Loader2,
+      Eye, EyeOff
       } from "lucide-react";
 const UpdatePassword = () => {
 
@@ -21,6 +22,8 @@ const UpdatePassword = () => {
     const [isOtpVerified, setIsOtpVerified] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+      const [showPassword, setShowPassword] = useState(false);
+
     const { showAlert } = useAlert();
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handleOtpChange = (value, index) => {
@@ -83,6 +86,7 @@ const UpdatePassword = () => {
         }
     
         try {
+            showLoading();
             // console.log("Sending OTP:", otp, "Email:", email);
             const response = await axios.post(`${API_URL}/api/auth/confirm-otp`, {
                 email,
@@ -90,15 +94,24 @@ const UpdatePassword = () => {
             });
             if (response.status === 200) {
                 // alert('OTP verified successfully!');
+                                showAlert({ variant: "success", title: "Success", message: "OTP verified successfully" });
+
                 setIsOtpVerified(true);
                 setIsOtpSent(false);
                 setError(""); // Clear error message
             } else {
-                setError(response.data.message || "Failed to verify OTP.");
+                // setError(response.data.message || "Failed to verify OTP.");
+                                showAlert({ variant: "error", title: "failed", message: response.data.message });
+
             }
         } catch (err) {
             // console.error("Error verifying OTP:", err.response?.data?.message);
-            setError(err.response?.data?.message || 'Error verifying OTP');
+            // setError(err.response?.data?.message || 'Error verifying OTP');
+                                            showAlert({ variant: "error", title: "failed", message: err.response?.data?.message || 'Error verifying OTP' });
+
+        }
+        finally{
+            hideLoading();
         }
     };
     
@@ -126,6 +139,8 @@ const UpdatePassword = () => {
         const loginRequestBody = { email };
     
         try {
+
+            showLoading();
             const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -137,17 +152,23 @@ const UpdatePassword = () => {
             if (response.status === 404) {
                 // User not found
                 const errorData = await response.json();
-                setError(errorData.message || "User not found.");
+                // setError(errorData.message || "User not found.");
+                                                            showAlert({ variant: "error", title: "failed", message: errorData.message || "User not found.Please check you email" });
+
                 return;
             } 
             if (response.status === 200) {
+                                                showAlert({ variant: "success", title: "Success", message: "OTP has been sent to you email, please check." });
+
                 // User exists, proceed with OTP
                 console.log("User exists, sending OTP...");
                 handleSendOTP();
             } else {
                 // Handle other unexpected status codes
                 const errorData = await response.json();
-                setError(errorData.message || "Something went wrong. Please try again.");
+                // setError(errorData.message || "Something went wrong. Please try again.");
+                            showAlert({ variant: "error", title: "Failed", message: errorData.message ||"Something went wrong. Please try again." });
+
             }
         } catch (error) {
             console.error("Login error:", error);
@@ -156,6 +177,9 @@ const UpdatePassword = () => {
             
             // setError("There was an error. Please try again.");
         }
+        finally{
+            hideLoading();
+        }
     };
     
 
@@ -163,12 +187,19 @@ const UpdatePassword = () => {
         const handlePasswordSubmit = async (e) => {
         e.preventDefault();
 
-        const data = { email, newPassword };
+const new_password = newPassword;
+const new_password_confirmation = newPassword;
+
+        const data = { email, new_password ,new_password_confirmation };
         // console.log("Email:", email);
-        // console.log("New Password:", newPassword);
+        // console.log("New Password:", ncewPassword);
+
+console.log("formdata",data);
+
 
         try {
-            const response = await fetch(`${API_URL}/api/auth/update-password`, {
+            showLoading();
+            const response = await fetch(`${API_URL}/api/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -177,14 +208,24 @@ const UpdatePassword = () => {
             const result = await response.json();
 
             if (response.ok) {
-                setMessage(result.message || "Password updated successfully!");
-                navigate('/Thankyou'); 
+                // setMessage(result.message || "Password updated successfully!");
+                                                                showAlert({ variant: "success", title: "Success", message: "Password updated successfully!" });
+
+
+                navigate('/'); 
             } else {
-                setMessage(result.message || "An error occurred");
+                // setMessage(result.message || "An error occurred");
+                            showAlert({ variant: "error", title: "Failed", message: result.message || "An error occurred" });
+
             }
         } catch (error) {
             // console.error("Error updating password:", error);
-            setMessage("An error occurred while updating the password");
+                                        showAlert({ variant: "error", title: "Failed", message:  "An error occurred,please try later" });
+
+            // setMessage("An error occurred while updating the password");
+        }
+        finally{
+            hideLoading();
         }
     };
 
@@ -243,26 +284,25 @@ const UpdatePassword = () => {
                         >
                            Send OTP
                         </button> */}
-
-                        {!isOtpVerified && (
-                            <div className="flex justify-end">
-                                {isLoading ? (
-                                    <button
-                                        type="submit"
-                                        className="mt-2 cursor-not-allowed flex justify-center bg-blue-400 py-1 px-4  rounded-md text-white"
-                                    >
-                                        <Loader2 className="animate-spin h-6 w-6 font-bold" />
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleLogin}
-                                        className="w-full bg-black text-white py-2 rounded-md hover:bg-[#2c2b2b] transition "
-                                        >
-                                        Send OTP
-                                    </button>
-                                )}
-                            </div>
-                        )}
+{!isOtpSent && !isOtpVerified && (
+  <div className="flex justify-end">
+    {isLoading ? (
+      <button
+        type="submit"
+        className="mt-2 cursor-not-allowed flex justify-center bg-blue-400 py-1 px-4 rounded-md text-white"
+      >
+        <Loader2 className="animate-spin h-6 w-6 font-bold" />
+      </button>
+    ) : (
+      <button
+        onClick={handleLogin}
+        className="w-full bg-black text-white py-2 rounded-md hover:bg-[#2c2b2b] transition"
+      >
+        Send OTP
+      </button>
+    )}
+  </div>
+)}
 
 
                     </form>
@@ -319,23 +359,56 @@ const UpdatePassword = () => {
 
 
 {isOtpVerified && (
-                        <div className="mt-4">
-                            <label htmlFor="newPassword" className="block text-sm font-medium">New Password</label>
-                            <input
-                                type="password"
-                                id="newPassword"
-                                className="w-full mt-1 px-3 py-2 border rounded-md focus:outline-none"
-                                placeholder="Enter new password"
-                                value={newPassword}
-                                onChange={handlePasswordChange}
-                            />
-                            <button
+                        // <div className="mt-4">
+                        //     <label htmlFor="newPassword" className="block text-sm font-medium">New Password</label>
+                        //     <input
+                        //         type="password"
+                        //         id="newPassword"
+                        //         className="w-full mt-1 px-3 py-2 border rounded-md focus:outline-none"
+                        //         placeholder="Enter new password"
+                        //         value={newPassword}
+                        //         onChange={handlePasswordChange}
+                        //     />
+                        //     <button
+                        //         onClick={handlePasswordSubmit}
+                        //         className="mt-2 bg-green-500 text-white py-1 px-4 rounded-md hover:bg-green-600"
+                        //     >
+                        //         Update Password
+                        //     </button>
+                        // </div>
+
+<div>
+                        <div className="space-y-2 relative">
+      <label htmlFor="password" className="block text-sm font-medium">
+        Password
+      </label>
+      <input
+        type={showPassword ? 'text' : 'password'}
+        id="newPassword"
+        className="w-full mt-1 px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-500 pr-10"
+        placeholder="Enter your password"
+           value={newPassword}
+               onChange={handlePasswordChange}
+        required
+
+        
+      />
+   <span
+  className="absolute right-3 top-10 -translate-y-1/2 cursor-pointer text-gray-600"
+  onClick={() => setShowPassword(!showPassword)}
+>
+
+        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+      </span>
+    </div>
+  <button
                                 onClick={handlePasswordSubmit}
                                 className="mt-2 bg-green-500 text-white py-1 px-4 rounded-md hover:bg-green-600"
                             >
                                 Update Password
                             </button>
-                        </div>
+</div>
+
                     )}
 
 

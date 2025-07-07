@@ -53,9 +53,9 @@ const Addsheet = () => {
     }
 
     if (name === "billingStatus") {
-      const selectedTag = tags.find(tag => tag.id.toString() === value);
+      const selectedTag = tags.find(tag => tag.name.toString() === value);
       if (selectedTag) {
-        value = selectedTag.id;
+        value = selectedTag.name;
       }
     }
 
@@ -82,11 +82,12 @@ const handleEdit = (index, field, value) => {
     }
   } else {
     if (field === "billingStatus") {
-      const selectedTag = tags.find(tag => tag.id.toString() === value);
-      if (selectedTag) {
-        value = selectedTag.id;
-      }
-    }
+  const selectedTag = tags.find(tag => tag.id.toString() === value);
+  if (selectedTag) {
+    value = selectedTag.name;
+  }
+}
+
 
     // ❌ Don't reformat hoursSpent again
     updatedEntries[index] = {
@@ -148,7 +149,7 @@ const handleEditClick = (index) => {
   const selectedTag = tags.find(tag => tag.id.toString() === entry.billingStatus.toString());
   return {
     ...entry,
-    billingStatus: selectedTag ? selectedTag.id : entry.billingStatus,
+    billingStatus: selectedTag ? selectedTag.name : entry.billingStatus,
   };
 });
 
@@ -172,22 +173,25 @@ const handleSave = () => {
   }
 
   // Tags may not have loaded properly
-  const selectedTag = tags.find(tag => tag.id.toString() === formData.billingStatus.toString());
-  if (!selectedTag) {
-    showAlert({
-      variant: "warning",
-      title: "Missing Tag",
-      message: "Please select a valid Action after choosing the Project."
-    });
-    return;
-  }
+ const selectedTag = tags.find(tag => tag.id.toString() === formData.billingStatus.toString());
+if (!selectedTag) {
+  showAlert({
+    variant: "warning",
+    title: "Missing Tag",
+    message: "Please select a valid Action after choosing the Project."
+  });
+  return;
+}
 
-  const tagName = selectedTag.name;
+
+ const tagName = selectedTag.name;
+
 const newEntry = {
   ...formData,
-  billingStatus: formData.billingStatus, // keep as ID
+  billingStatus: tagName, // ✅ Store name instead of ID
 };
 
+console.log("neww enteries",newEntry);
   const updated = [...savedEntries, newEntry];
   setSavedEntries(updated);
   localStorage.setItem("savedTimesheetEntries", JSON.stringify(updated));

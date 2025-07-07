@@ -14,7 +14,8 @@ export const Clients = () => {
   const { addClient, isLoading, message } = useClient(); // Assuming addClient is from useClient
   const [clientName, setClientName] = useState("");
   const [hiringId, sethiringId] = useState("");
-  const [contactDetail, setContactDetail] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+    const [contactnumber, setContactnumber] = useState("");
   const [clienttype, setClienttype] = useState("");
   const [companyname, setCompanyname] = useState("");
   const [address, setAddress] = useState("");
@@ -41,12 +42,14 @@ export const Clients = () => {
     if (clienttype === "Hired on Upwork") {
       if (!clientName.trim()) { newErrors.name = "Client Name is required."; isValid = false; }
       if (!hiringId.trim()) { newErrors.hire_on_id = "Hiring ID is required."; isValid = false; }
-      if (!contactDetail.trim()) { newErrors.contact_detail = "Contact Details are required."; isValid = false; }
+    if (!contactEmail.trim()) { newErrors.contact_email = "Contact Email are required."; isValid = false; }
+      if (!contactnumber.trim()) { newErrors.contact_number = "Contact Number are required."; isValid = false; } 
       if (!communication.trim()) { newErrors.communication = "Communication details are required."; isValid = false; }
       if (!projectType.trim()) { newErrors.project_type = "Project Type is required."; isValid = false; }
     } else if (clienttype === "Direct") {
       if (!clientName.trim()) { newErrors.name = "Client Name is required."; isValid = false; }
-      if (!contactDetail.trim()) { newErrors.contact_detail = "Contact Details are required."; isValid = false; }
+      if (!contactEmail.trim()) { newErrors.contact_email = "Contact Email are required."; isValid = false; }
+      if (!contactnumber.trim()) { newErrors.contact_number = "Contact Number are required."; isValid = false; } 
       if (!address.trim()) { newErrors.company_address = "Address is required."; isValid = false; }
       if (!companyname.trim()) { newErrors.company_name = "Company Name is required."; isValid = false; }
       if (!communication.trim()) { newErrors.communication = "Communication details are required."; isValid = false; }
@@ -71,7 +74,8 @@ export const Clients = () => {
     console.log("Submitting:", {
       clientName,
       hiringId,
-      contactDetail,
+      contactEmail,
+      contactnumber,
       address,
       companyname,
       clienttype,
@@ -83,11 +87,13 @@ export const Clients = () => {
       clienttype,
       clientName, // This maps to 'name' on backend
       hiringId,   // This maps to 'hire_on_id' on backend
-      contactDetail, // This maps to 'contact_detail' on backend
+      contactEmail,
+      contactnumber,
       address,      // This maps to 'company_address' on backend
       companyname,  // This maps to 'company_name' on backend
       communication,
-      projectType
+      projectType,
+      
     );
 
     if (result.success) {
@@ -95,7 +101,9 @@ export const Clients = () => {
       setClientName("");
       sethiringId("");
       setAddress("");
-      setContactDetail("");
+      // setContactDetail("");
+      setContactEmail("");
+      setContactnumber("");
       setCompanyname("");
       setClienttype("");
       setCommunication("");
@@ -221,29 +229,59 @@ export const Clients = () => {
 
               <div>
                 <label
-                  htmlFor="contactDetail"
+                  htmlFor="contactEmail"
                   className="block font-medium text-gray-700 text-sm"
                 >
-                  Contact Details
+                  Contact Email
                 </label>
                 <input
-                  id="contactDetail"
-                  value={contactDetail}
+                typeof="email"
+                  id="contactEmail"
+                  value={contactEmail}
                   onChange={(e) => {
-                    setContactDetail(e.target.value);
-                    setErrors({ ...errors, contact_detail: null }); // 'contact_detail' for backend
+                    setContactEmail(e.target.value);
+                    setErrors({ ...errors, contact_email: null }); // 'contact_detail' for backend
                   }}
-                  placeholder="Enter Contact Details"
+                  placeholder="Enter Contact E-mail"
                   className={`w-full p-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                    getErrorMessage('contact_detail') ? "border-red-500" : "border-gray-300"
+                    getErrorMessage('contact_email') ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {getErrorMessage('contact_detail') && (
+                {getErrorMessage('contact_email') && (
                   <p className="text-red-500 text-xs mt-1">
-                    {getErrorMessage('contact_detail')}
+                    {getErrorMessage('contact_email')}
                   </p>
                 )}
               </div>
+
+   <div>
+                <label
+                  htmlFor="contactnumber"
+                  className="block font-medium text-gray-700 text-sm"
+                >
+                  Contact Number
+                </label>
+                <input
+                type="number"
+                maxLength={10}
+                  id="contactnumber"
+                  value={contactnumber}
+                  onChange={(e) => {
+                    setContactnumber(e.target.value);
+                    setErrors({ ...errors, contact_number: null }); // 'contact_detail' for backend
+                  }}
+                  placeholder="Enter Contact Number"
+                  className={`w-full p-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                    getErrorMessage('contact_number') ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {getErrorMessage('contact_number') && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {getErrorMessage('contact_number')}
+                  </p>
+                )}
+              </div>
+
 
               <div>
                 <label
@@ -372,25 +410,52 @@ export const Clients = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Contact Details
+                  Contact E-mail
                 </label>
                 <input
-                  value={contactDetail}
+                typeof="email"
+                  value={contactEmail}
                   onChange={(e) => {
-                    setContactDetail(e.target.value);
-                    setErrors({ ...errors, contact_detail: null });
+                    setContactEmail(e.target.value);
+                    setErrors({ ...errors, contact_email :null });
                   }}
-                  placeholder="Enter Contact Details"
+                  placeholder="Enter Contact Email"
                   className={`w-full p-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                    getErrorMessage('contact_detail') ? "border-red-500" : "border-gray-300"
+                    getErrorMessage('contact_email') ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {getErrorMessage('contact_detail') && (
+                {getErrorMessage('contact_email') && (
                   <p className="text-red-500 text-xs mt-1">
-                    {getErrorMessage('contact_detail')}
+                    {getErrorMessage('contact_email')}
                   </p>
                 )}
               </div>
+
+  <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Contact Number
+                </label>
+                <input
+                type="number"
+                maxLength={10}
+                  value={contactnumber}
+                  onChange={(e) => {
+                    setContactnumber(e.target.value);
+                    setErrors({ ...errors, contact_number: null });
+                  }}
+                  placeholder="Enter Contact Number"
+                  className={`w-full p-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                    getErrorMessage('contact_number') ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {getErrorMessage('contact_number') && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {getErrorMessage('contact_number')}
+                  </p>
+                )}
+              </div>
+
+
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">

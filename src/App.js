@@ -5,6 +5,7 @@ import AppRoutes from "./components/Routes";
 import RedirectByRole from "./components/utils/RedirectByRole";
 import { AlertProvider } from "./components/context/AlertContext";
 import UpdatePassword from "./components/pages/UpdatePassword";
+import RedirectToDashboard from "./components/components/RedirectToDashboard";
 function App() {
   return (
     <Router>
@@ -12,7 +13,8 @@ function App() {
       <AuthProvider>
         {/* <RedirectByRole /> Include the component here */}
         <Routes>
-          <Route path="/" element={<Login />} />
+<Route path="/" element={<RedirectToDashboard />} />
+<Route path="/login" element={<Login />} />
           <Route path="/updatepassword" element={<UpdatePassword />} />
           <Route path="/*" element={<AppRoutes />} />
         </Routes>

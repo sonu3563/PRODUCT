@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { API_URL } from "../../../utils/ApiConfig";
 import { StatCardHeader } from "../../../components/CardsDashboard";
-import { CheckCircle, XCircle, Pencil, Ban, Save, Edit, CalendarDays, Loader2, BarChart, Search, Trash2, Eye, UserPlus, FolderSync, Briefcase } from "lucide-react";
+import { Loader2, Briefcase } from "lucide-react";
 
 import {
   Chart as ChartJS,
@@ -16,12 +16,14 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const DashboardCard06 = () => {
   const [chartData, setChartData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(true); // ✅ Added loading state
   const token = localStorage.getItem("userToken");
 
   useEffect(() => {
     const fetchDepartmentProjects = async () => {
       if (!token) {
         setErrorMsg('User token not found in localStorage.');
+        setLoading(false); // ✅ Stop loading if no token
         return;
       }
 
@@ -68,6 +70,8 @@ const DashboardCard06 = () => {
       } catch (error) {
         console.error('Error fetching department project data:', error);
         setErrorMsg(error.message);
+      } finally {
+        setLoading(false); // ✅ Always stop loading
       }
     };
 
@@ -87,12 +91,18 @@ const DashboardCard06 = () => {
     <div className="flex flex-col sm:col-span-6 xl:col-span-5 rounded-lg shadow-lg bg-white">
       <StatCardHeader icon={Briefcase} title="Total Projects in Department" tooltip="Total Projects in Department." />
       <div className="p-6 h-96 flex justify-center items-center">
-        {errorMsg ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center space-y-4 text-gray-600 py-8">
+            <Loader2 className="h-14 w-14 animate-spin text-gray-500" />
+            <span className="text-xl font-semibold">Loading department data...</span>
+            <span className="text-base text-gray-500">Fetching projects by department.</span>
+          </div>
+        ) : errorMsg ? (
           <p className="text-red-500">{errorMsg}</p>
         ) : chartData ? (
           <Pie data={chartData} options={projectOptions} />
         ) : (
-          <p>Loading chart...</p>
+          <p className="text-gray-400">No chart data available.</p>
         )}
       </div>
     </div>

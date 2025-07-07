@@ -315,6 +315,11 @@ const totalPages = Math.ceil(
                   setStartDate("");
                   setEndDate("");
                   clearFilter("");
+                   const yesterday = getYesterday();
+  setIsCustomMode(false);
+  setSearchTerm("");
+  setStartDate(yesterday);
+  setEndDate(yesterday);
                 }}
               />
 

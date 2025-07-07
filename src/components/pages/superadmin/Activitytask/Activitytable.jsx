@@ -160,7 +160,7 @@ export const Activitytable = () => {
             />
           </div>
           <ClearButton onClick={handleClearSearch} />
-          <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} />
+          {/* <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} /> */}
           <ExportButton onClick={() => exportToExcel(filteredActivityTags, "ActivityTags.xlsx")} />
         </div>
       </div>

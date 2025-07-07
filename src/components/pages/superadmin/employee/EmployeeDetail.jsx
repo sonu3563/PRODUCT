@@ -105,7 +105,9 @@ const EmployeeDetail = () => {
         );
 
         setEmployee(response.data.data.user);
+        console.log("this also", response.data.data.user);
         setProjects(response.data.data.project_user);
+        console.log("these i have to check inside", response.data.data.project_user);
         prepareBarChartData(response.data.data.project_user);
         setLoading(false);
       } catch (error) {
@@ -129,7 +131,7 @@ const EmployeeDetail = () => {
 
         if (activity.activity_type === "Billable") {
           totalBillable += activityHours;
-        } else if (activity.activity_type === "Non-Billable") {
+        } else if (activity.activity_type === "Non Billable") {
           totalNonBillable += activityHours;
         }
       });
@@ -150,6 +152,9 @@ const EmployeeDetail = () => {
     });
   };
 
+
+
+  
   const handleProjectChange = (e) => {
     const selectedName = e.target.value;
     setSelectedProject(selectedName);
@@ -157,7 +162,7 @@ const EmployeeDetail = () => {
     const selected = projects.find(p => (p.project_name || 'Unnamed Project') === selectedName);
     if (!selected) return setPieChartData({});
 
-    const types = ['Billable', 'Non-Billable', 'In-House', 'Learning (R&D)', 'No Work'];
+    const types = ['Billable', 'Non Billable', 'inhouse', 'Learning (R&D)', 'No Work'];
     const data = types.map(type => {
       const act = selected.activities.find(a => a.activity_type?.toLowerCase() === type.toLowerCase());
       return act ? parseFloat(act.total_hours.split(":")[0]) + parseFloat(act.total_hours.split(":")[1]) / 60 : 0;
@@ -387,7 +392,7 @@ const EmployeeDetail = () => {
 
           {/* Project Specific Chart */}
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 space-y-8">
-            <h3 className="text-xl font-bold text-gray-800">Project-Specific Activity Analysis</h3>
+            <h3 className="text-xl font-bold text-gray-800"></h3>
 
             <div className="flex flex-col lg:flex-row items-start gap-8"> {/* Align items-start for better flow */}
               <div className="w-full lg:w-1/3">

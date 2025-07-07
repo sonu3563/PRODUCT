@@ -19,6 +19,7 @@ import { GraphProvider } from '../../context/GraphContext';
 import { ProjectProvider } from '../../context/ProjectContext';
 import { ClientProvider } from '../../context/ClientContext';
 
+
 const SuperAdminDashboard = () => {
   useEffect(() => {
     console.log("Super Admin Dashboard Mounted");
@@ -29,7 +30,7 @@ const SuperAdminDashboard = () => {
 
       <GraphProvider>
         <ProjectProvider>
-          <DashboardCard01 />
+          <DashboardCard01/>
         </ProjectProvider>
       </GraphProvider>
 

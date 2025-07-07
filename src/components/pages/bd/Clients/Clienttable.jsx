@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useClient } from "../../../context/ClientContext";
 import { Edit, Save, Trash2, Loader2, BarChart, Search } from "lucide-react";
-import { exportToExcel, importFromExcel, useImportEmployees, fetchGoogleSheetData } from "../../../components/excelUtils";
+import { exportToExcel, importFromExcel, useImportClients, fetchGoogleSheetData } from "../../../components/excelUtils";
 import { Clients } from './Clients'
-import { FaFileExcel, FaGoogle } from "react-icons/fa";
+import { FaFileCsv, FaGoogle } from "react-icons/fa";
 import { SectionHeader } from '../../../components/SectionHeader';
 import { EditButton, SaveButton, CancelButton, ClearButton, ImportButton, ExportButton, YesButton, DeleteButton, IconApproveButton, IconRejectButton, IconCancelTaskButton, IconSaveButton, IconDeleteButton, IconEditButton } from "../../../AllButtons/AllButtons";
-
-
+import Pagination from "../../../components/Pagination";
+import { useAlert } from "../../../context/AlertContext";
+import { useImport } from "../../../context/Importfiles.";
+import { Loader } from "lucide-react";
 export const Clienttable = () => {
   const { clients, fetchClients, isLoading, editClient, deleteClient } = useClient();
   const [editClientId, setEditClientId] = useState(null);
@@ -23,12 +25,20 @@ export const Clienttable = () => {
   const [selectedClientType, setSelectedClientType] = useState("Hired on Upwork");
   const [editingClient, setEditingClient] = useState(null);
   const [editedData, setEditedData] = useState({});
-  const [importType, setImportType] = useState(null); // Track selected import type
+  const [importType, setImportType] = useState(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [deleteclient, setDeleteclient] = useState("");
-  const [editid, setEditid] = useState(null);
-  //  const { importEmployees } = useImportEmployees(); // ✅ Extract correctly
 
+  const [selectedFile, setSelectedFile] = useState(null); // <-- This was missing
+
+
+  const [editid, setEditid] = useState(null);
+    const { showAlert } = useAlert();
+
+ const { importClients ,loading } = useImportClients(); 
+   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   console.log("clients fetched", clients);
   useEffect(() => {
     fetchClients();
@@ -36,15 +46,16 @@ export const Clienttable = () => {
   console.log("these are", clients);
   const filteredEmployees = clients?.data?.filter((client) => {
     if (!client || !client[filterBy]) return false;
-
-    // Apply search filter
-    const matchesSearch = client[filterBy].toString().toLowerCase().includes(searchQuery.toLowerCase());
-
-    // Apply client type filter
+  
+    const clientField = client[filterBy].toString().toLowerCase().trim();
+    const search = searchQuery.toLowerCase().trim();
+    const matchesSearch = clientField.includes(search);
     const matchesClientType = client.client_type === selectedClientType;
-
+  
     return matchesSearch && matchesClientType;
-  });
+  }) || [];
+  
+  
 
 
   const clearFilter = () => {
@@ -52,13 +63,30 @@ export const Clienttable = () => {
     setFilterBy("name");
   };
 
-  // const handleGoogleSheetImport = () => {
-  //   if (!googleSheetUrl) {
-  //     alert("Please enter a Google Sheets link.");
-  //     return;
-  //   }
-  //   fetchGoogleSheetData(googleSheetUrl, importEmployees);
-  // };
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterBy, selectedClientType]);
+  
+const handleGoogleSheetImport = async () => {
+  if (!googleSheetUrl) {
+    alert("Please enter a Google Sheets link.");
+    return;
+  }
+
+  try {
+    await fetchGoogleSheetData(googleSheetUrl, importClients); // make sure this returns a Promise
+    setShowImportOptions("");
+    setImportType("");
+  } catch (error) {
+    console.error("Google Sheet import failed:", error);
+  }
+};
+
 
   // const handleImport = async (e) => {
   //   const file = e.target.files[0];
@@ -69,8 +97,39 @@ export const Clienttable = () => {
   //     importEmployees(data); // ✅ Add employees to the system
   //   });
   // };
+ const {
+    importClientData,
+    importProjectData,
+    importEmployeeData,
+    importLoading,
+  } = useImport();
 
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
 
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    try {
+
+        await importClientData(selectedFile);
+      
+      setImportType(""); // close modal on success
+    } catch (err) {
+      console.error("Import failed:", err);
+    }
+  };
+
+const handleSubmit = async () => {
+    if (!selectedFile) return;
+    try {
+      await importEmployeeData(selectedFile); // change to appropriate import function
+      setImportType(""); // close modal on success
+    } catch (error) {
+      // error handled by context's showAlert already
+    }
+  };
 
   // const handleEditClick = (client) => {
   //   setEditClientId(client.id);
@@ -88,18 +147,29 @@ export const Clienttable = () => {
   };
 
 
-  const handleEditClick = (client) => {
-    setEditingClient(client.id);
-    setEditedData({
-      name: client.name,
-      hire_on_id: client.hire_on_id || "",
-      hire_through: client.hire_through || "",
-      contact_detail: client.contact_detail || "",
-      company_name: client.company_name || "",
-      company_address: client.company_address || "",
-      client_type: client.client_type,
-    });
-  };
+const handleEditClick = async (client) => {
+  setEditingClient(client.id);
+  setEditedData({
+    name: client.name,
+    hire_on_id: client.hire_on_id || "",
+    hire_through: client.hire_through || "",
+    client_email: client.client_email || "",
+      client_number: client.client_number || "",
+        // contact_detail: client.client_detail || "",
+    company_name: client.company_name || "",
+    company_address: client.company_address || "",
+    project_type: client.project_type || "",
+    communication: client.communication || "",
+    client_type: client.client_type,
+  });
+
+  // Simulate some async logic if needed (e.g., API call or state sync)
+  await new Promise(resolve => setTimeout(resolve, 100)); // optional
+
+  // Reset after edit is handled
+  setShowImportOptions("");
+  setImportType("");
+};
 
 
 
@@ -123,6 +193,26 @@ export const Clienttable = () => {
       setDeleteConfirm(clientId);
     }
   };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+// const handleImport = (e) => {
+//   const file = e.target.files[0];
+//   if (!file) return;
+
+//   importFromExcel(file, (data) => {
+//     console.log("✅ Final Imported Data:", data);
+//     importClients(data);
+//   }, showAlert); // ✅ showAlert passed as third argument
+// };
+
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-md max-h-screen overflow-y-auto">
@@ -179,7 +269,10 @@ export const Clienttable = () => {
           >
             <option value="name">Client Name</option>
             <option value="hire_on_id">Hiring Id</option>
-            <option value="hire_through">Hiring Platform</option>
+            {/* <option value="id">Hiring Platform</option> */}
+             <option value="client_email">Contact Email</option>
+              <option value="client_number">Contact Number</option>
+            <option value="project_type">Project Type</option> 
           </select>
 
 
@@ -191,19 +284,6 @@ export const Clienttable = () => {
             </button> */}
           <ClearButton onClick={() => clearFilter()} />
           <div className="flex gap-3">
-            {/* <button
-                onClick={() => setShowImportOptions(!showImportOptions)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-              >
-                Import
-              </button> */}
-            {/* <button
-                onClick={() => exportToExcel(clients.data || [], "clients.xlsx")}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-              >
-                Export to Excel
-              </button> */}
-
             <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} />
             <ExportButton onClick={() => exportToExcel(clients.data || [], "clients.xlsx")} />
 
@@ -221,13 +301,19 @@ export const Clienttable = () => {
                 {filteredEmployees?.some(client => client.client_type === "Hired on Upwork") && (
                   <th className="px-4 py-2 font-medium text-sm">Hiring Id</th>
                 )}
-                <th className="px-4 py-2 font-medium text-sm text-center">Contact Details</th>
+                {/* <th className="px-4 py-2 font-medium text-sm text-center">Contact Details</th> */}
+                                <th className="px-4 py-2 font-medium text-sm text-center">Contact E-mail</th>
+
+                <th className="px-4 py-2 font-medium text-sm text-center">Contact Number</th>
+
                 {filteredEmployees?.some(client => client.client_type === "Direct") && (
                   <>
                     <th className="px-4 py-2 font-medium text-sm">Company Name</th>
                     <th className="px-4 py-2 font-medium text-sm">Address</th>
                   </>
                 )}
+                <th className="px-4 py-2 font-medium text-sm text-center">Project type</th>
+                <th className="px-4 py-2 font-medium text-sm text-center">Communication</th>
                 <th className="px-4 py-2 font-medium text-sm text-center">Created At</th>
                 <th className="px-4 py-2 font-medium text-sm text-center">Actions</th>
               </tr>
@@ -244,7 +330,7 @@ export const Clienttable = () => {
                   </td>
                 </tr>
               ) : clients?.data?.length > 0 ? (
-                filteredEmployees.map((client) => (
+                paginatedEmployees.map((client) => (
                   <tr key={client.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-6 py-4 text-gray-800 font-medium text-sm text-center">
                       {editingClient === client.id ? (
@@ -278,14 +364,27 @@ export const Clienttable = () => {
                       {editingClient === client.id ? (
                         <input
                           type="text"
-                          value={editedData.contact_detail}
-                          onChange={(e) => handleInputChange(e, "contact_detail")}
+                          value={editedData.client_email}
+                          onChange={(e) => handleInputChange(e, "client_email")}
                           className="border p-1 w-full"
                         />
                       ) : (
-                        client.contact_detail
+                        client.client_email
                       )}
                     </td>
+   <td className="px-6 py-4 text-gray-600 text-sm text-center">
+                      {editingClient === client.id ? (
+                        <input
+                          type="text"
+                          value={editedData.client_number}
+                          onChange={(e) => handleInputChange(e, "client_number")}
+                          className="border p-1 w-full"
+                        />
+                      ) : (
+                        client.client_number
+                      )}
+                    </td>
+
 
                     {client.client_type === "Direct" && (
                       <>
@@ -317,49 +416,82 @@ export const Clienttable = () => {
                     )}
 
                     <td className="px-6 py-4 text-gray-600 text-sm text-center">
-                      {new Date(client.created_at).toLocaleDateString()}
+                      {editingClient === client.id ? (
+                            <select
+                              id="project_type"
+                              value={editedData.project_type}
+                              onChange={(e) => handleInputChange(e, "project_type")}
+                              className="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            >
+                              <option value="">Select Project Type</option>
+                              <option value="fixed">fixed</option>
+                              <option value="hourly">hourly</option>
+                            </select>
+                          ) : (
+                             client.project_type === "hourly" ?
+                             <span class="bg-yellow-100 text-yellow-600 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ">{client.project_type}</span>:
+                             <span class="bg-blue-100 text-blue-600 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ">{client.project_type}</span>
+                          )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 text-sm text-center">
+                      {editingClient === client.id ? (
+                            <input
+                              type="text"
+                              value={editedData.communication || ""}
+                              onChange={(e) => handleInputChange(e, "communication")}
+                              className="border p-1 w-full"
+                            />
+                          ) : (
+                             client.communication
+                          )}
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600 text-sm text-center">
+                    {formatDate(client.created_at)}
+                      {/* {formatDatee(client.created_at).toLocaleDateString()} */}
                     </td>
 
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center space-x-2">
                         {editingClient === client.id ? (
                           <>
-                            {/* <button
-                              onClick={handleSaveClick}
-                              className="flex items-center justify-center px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-md transition"
-                            ><Save className="h-4 w-4 mr-1" />
-                              Save
-                            </button> */}
-                            <IconSaveButton onClick={handleSaveClick} />
-                            {/* <button
-                              onClick={() => setEditingClient(null)}
-                              className="flex items-center justify-center px-3 py-1.5 border border-gray-500 text-gray-500 hover:bg-gray-50 rounded-md transition"
-                            >
-                              Cancel
-                            </button> */}
-                            <IconCancelTaskButton onClick={() => setEditingClient(null)} />
+                            <div className="relative group">
+                                  <IconSaveButton onClick={handleSaveClick} />
+                                  <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 
+                                    whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded 
+                                    opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
+                                        Edit
+                                </span>
+                            </div>
+                           
+                              <div className="relative group">
+                                     <IconCancelTaskButton onClick={() => setEditingClient(null)} />
+                                    <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 
+                                      whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded 
+                                      opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
+                                          Edit
+                                  </span>
+                              </div>
                           </>
                         ) : (
                           <>
-                            {/* <button
-                              onClick={() => handleEditClick(client)}
-                              className="flex items-center justify-center px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md transition"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </button> */}
-                            <IconEditButton onClick={() => handleEditClick(client)} />
-                            {/* <button
-                              onClick={() => {
-                                setEditid(client.id);
-                                setDeleteclient(true);
-                              }}
-                              className="flex items-center justify-center px-3 py-1.5 border border-red-500 text-red-500 hover:bg-red-50 rounded-md transition"
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </button> */}
-                            <IconDeleteButton onClick={() => { setEditid(client.id); setDeleteclient(true); }} />
+                              <div className="relative group">
+                                    <IconEditButton onClick={() => handleEditClick(client)} />
+                                    <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 
+                                      whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded 
+                                      opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
+                                          Edit
+                                  </span>
+                              </div>
+                            
+                              <div className="relative group">
+                                    <IconDeleteButton onClick={() => { setEditid(client.id); setDeleteclient(true); }} />
+                                    <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 
+                                      whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded 
+                                      opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
+                                          Delete
+                                  </span>
+                              </div>
                           </>
                         )}
 
@@ -398,6 +530,15 @@ export const Clienttable = () => {
               )}
             </tbody>
           </table>
+          
+        </div>
+        <div className="p-4">
+
+                <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
         </div>
       </div>
       {showImportOptions && (
@@ -412,11 +553,11 @@ export const Clienttable = () => {
               }}
               className="flex items-center justify-center gap-3 w-full px-4 py-3 text-gray-700 border rounded-md hover:bg-gray-100 transition"
             >
-              <FaFileExcel className="text-green-600 text-xl" />
-              <span>Import Excel</span>
+              <FaFileCsv className="text-green-600 text-xl" />
+              <span>Import Csv File</span>
             </button>
 
-            <button
+            {/* <button
               onClick={() => {
                 setImportType("googleSheet");
                 setShowImportOptions(false);
@@ -425,7 +566,7 @@ export const Clienttable = () => {
             >
               <FaGoogle className="text-blue-500 text-xl" />
               <span>Import Google Sheet</span>
-            </button>
+            </button> */}
 
             {/* <button
               onClick={() => setShowImportOptions(false)}
@@ -439,24 +580,34 @@ export const Clienttable = () => {
       )}
 
       {importType === "excel" && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
-          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3">
-            <p className="text-gray-700 font-medium">Upload an Excel File:</p>
+       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+        {!importLoading ? (
+          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3 w-96">
+            <p className="text-gray-700 font-medium">Upload an Csv File:</p>
             <input
               type="file"
               accept=".xlsx, .xls"
-              //  onChange={handleImport}
+              onChange={(e) => setSelectedFile(e.target.files[0])}
               className="px-3 py-2 border rounded-md cursor-pointer"
             />
-            <button
-              onClick={() => setImportType("")}
-              className="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-            >
-              Cancel
-            </button>
-          </div>
 
-        </div>
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              disabled={!selectedFile}
+            >
+              Upload
+            </button>
+
+            <CancelButton onClick={() => setImportType("")} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="animate-spin text-white w-10 h-10" />
+            <p className="text-white text-lg font-medium">Importing Employees...</p>
+          </div>
+        )}
+      </div>
       )}
 
       {importType === "googleSheet" && (
@@ -471,17 +622,18 @@ export const Clienttable = () => {
               className="px-3 py-2 border rounded-md w-72 focus:outline-none"
             />
             <button
-              //  onClick={handleGoogleSheetImport}
+               onClick={handleGoogleSheetImport}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
             >
               Import from Google Sheets
             </button>
-            <button
+            {/* <button
               onClick={() => setImportType("")}
               className="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
             >
               Cancel
-            </button>
+            </button> */}
+            <CancelButton onClick={() => setImportType("")} />
           </div>
         </div>
       )}
@@ -523,6 +675,7 @@ export const Clienttable = () => {
           </div>
         </div>
       )}
+      
     </div>
   );
 };

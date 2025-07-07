@@ -4,17 +4,22 @@ import { useClient } from "../../../context/ClientContext";
 import { Edit, Save, Trash2, Loader2, Calendar, User, Briefcase, Clock, FileText, Target, BarChart, Search, CheckCircle, XCircle, Pencil, Ban } from "lucide-react";
 import { Projects } from './Projects';
 import { SectionHeader } from '../../../components/SectionHeader';
-import { exportToExcel, importFromExcel, useImportEmployees, fetchGoogleSheetData } from "../../../components/excelUtils";
+import { exportToExcel, importFromExcel, useImportEmployees, fetchGoogleSheetData ,useImportProjects } from "../../../components/excelUtils";
 import { EditButton, SaveButton, CancelButton, DeleteButton, ExportButton, ImportButton, ClearButton, IconApproveButton, IconRejectButton, IconCancelTaskButton, IconSaveButton, IconDeleteButton, IconEditButton, IconViewButton } from "../../../AllButtons/AllButtons";
 import { useActivity } from "../../../context/ActivityContext";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
+import { FaFileCsv, FaGoogle } from "react-icons/fa";
+import { useImport } from "../../../context/Importfiles.";
+import { Loader } from "lucide-react";
 
 export const Projecttable = () => {
   const { projects, fetchProjects, editProject, deleteProject, isLoading } = useProject();
   const { clients } = useClient(); // Getting clients data
   const [editProjectId, setEditProjectId] = useState(null);
   const [editClientId, setEditClientId] = useState('');
+    const [importType, setImportType] = useState(null);
+    const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [editProjectName, setEditProjectName] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -26,6 +31,16 @@ export const Projecttable = () => {
   const [editTags, setEditTags] = useState([]);
   const [searchTagQuery, setSearchTagQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+    const [selectedFile, setSelectedFile] = useState(null); // <-- This was missing
+  
+  // comst { importProjects }  = useImportProjects();
+   const {
+      importClientData,
+      importProjectData,
+      importEmployeeData,
+      importLoading,
+    } = useImport();
+   const { importProjects } = useImportProjects(); 
   const itemsPerPage = 10;
    const { getActivityTags, activityTags, loading, message } = useActivity();
    const navigate = useNavigate();
@@ -88,6 +103,43 @@ export const Projecttable = () => {
     setEditProjectName(project.project_name);
     setEditTags(project.tags_activities?.map(tag => tag.id) || []);
   };
+
+const handleSubmit = async () => {
+    if (!selectedFile) return;
+    try {
+      await importEmployeeData(selectedFile); // change to appropriate import function
+      setImportType(""); // close modal on success
+    } catch (error) {
+      // error handled by context's showAlert already
+    }
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    importFromExcel(file, (data) => {
+      console.log("✅ Final Imported Data:", data);
+      importProjects(data); // ✅ This is now defined and will work
+    });
+  };
+
+
+const handleGoogleSheetImport = async () => {
+  if (!googleSheetUrl) {
+    alert("Please enter a Google Sheets link.");
+    return;
+  }
+
+  try {
+    await fetchGoogleSheetData(googleSheetUrl, importProjects); // make sure this returns a Promise
+    setShowImportOptions("");
+    setImportType("");
+  } catch (error) {
+    console.error("Google Sheet import failed:", error);
+  }
+};
+
 
 
   const handleSaveClick = async () => {
@@ -413,6 +465,102 @@ export const Projecttable = () => {
           </div>
         </div>
       )}
+
+            {showImportOptions && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-30">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-96 flex flex-col gap-4 animate-fadeIn">
+                  <h3 className="text-lg font-semibold text-gray-800 text-center">Select Import Type</h3>
+      
+                  <button
+                    onClick={() => {
+                      setImportType("excel");
+                      setShowImportOptions(false);
+                    }}
+                    className="flex items-center justify-center gap-3 w-full px-4 py-3 text-gray-700 border rounded-md hover:bg-gray-100 transition"
+                  >
+                    <FaFileCsv className="text-green-600 text-xl" />
+              <span>Import Csv File</span>
+                  </button>
+      
+                  {/* <button
+                    onClick={() => {
+                      setImportType("googleSheet");
+                      setShowImportOptions(false);
+                    }}
+                    className="flex items-center justify-center gap-3 w-full px-4 py-3 text-gray-700 border rounded-md hover:bg-gray-100 transition"
+                  >
+                    <FaGoogle className="text-blue-500 text-xl" />
+                    <span>Import Google Sheet</span>
+                  </button> */}
+      
+                  {/* <button
+                    onClick={() => setShowImportOptions(false)}
+                    className="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                  >
+                    Cancel
+                  </button> */}
+                  <CancelButton onClick={() => setShowImportOptions(false)} />
+                </div>
+              </div>
+            )}
+        {importType === "excel" && (
+       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+        {!importLoading ? (
+          <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3 w-96">
+            <p className="text-gray-700 font-medium">Upload an Csv File:</p>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              className="px-3 py-2 border rounded-md cursor-pointer"
+            />
+
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              disabled={!selectedFile}
+            >
+              Upload
+            </button>
+
+            <CancelButton onClick={() => setImportType("")} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="animate-spin text-white w-10 h-10" />
+            <p className="text-white text-lg font-medium">Importing Employees...</p>
+          </div>
+        )}
+      </div>
+      )}
+      
+            {importType === "googleSheet" && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+                <div className="mt-3 p-4 border rounded-lg bg-white shadow-md flex flex-col gap-3">
+                  <p className="text-gray-700 font-medium">Paste Google Sheet Link:</p>
+                  <input
+                    type="text"
+                    placeholder="Enter Google Sheet link"
+                    value={googleSheetUrl}
+                    onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                    className="px-3 py-2 border rounded-md w-72 focus:outline-none"
+                  />
+                  <button
+                     onClick={handleGoogleSheetImport}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                  >
+                    Import from Google Sheets
+                  </button>
+                  {/* <button
+                    onClick={() => setImportType("")}
+                    className="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                  >
+                    Cancel
+                  </button> */}
+                  <CancelButton onClick={() => setImportType("")} />
+                </div>
+              </div>
+            )}
     </div>
   );
 };

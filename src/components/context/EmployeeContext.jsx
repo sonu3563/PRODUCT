@@ -66,14 +66,11 @@ const addEmployee = async (employeeData) => {
     }
 
     if ([1, 2, 3, 4].includes(Number(employeeData.role_id))) {
-      console.log("Role requires no team, appending empty team_id");
       formData.append("team_id", "");
     } else {
       if (employeeData.team_id != null) {
-        console.log("Appending team_id:", employeeData.team_id);
         formData.append("team_id", employeeData.team_id);
       } else {
-        console.log("Appending team:", employeeData.team);
         formData.append("team", employeeData.team);
       }
     }
@@ -85,17 +82,11 @@ const addEmployee = async (employeeData) => {
         title: "Upload Error",
         message: "You can upload a maximum of 1 image.",
       });
-      return;
+      return false;
     }
 
     if (images.length === 1 && images[0] instanceof File) {
       formData.append("profile_pic", images[0]);
-    }
-
-    // Final output
-    console.log("Final FormData content:");
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
     }
 
     const response = await fetch(`${API_URL}/api/users`, {
@@ -105,14 +96,21 @@ const addEmployee = async (employeeData) => {
       },
       body: formData,
     });
+    const data = await response.json();
 
     if (!response.ok) {
-      const errorResponse = await response.json();
-      throw new Error(JSON.stringify(errorResponse));
-    }
+      const firstError = data?.errors
+        ? Object.values(data.errors)[0][0]
+        : data?.message || "Something went wrong";
 
-    const newEmployee = await response.json();
-    setEmployees((prev) => [...prev, newEmployee.data]);
+      showAlert({
+        variant: "error",
+        title: "Failed to Add",
+        message: firstError,
+      });
+
+      return false; // ⚠️ Needed so import count works
+    }
 
     showAlert({
       variant: "success",
@@ -120,23 +118,20 @@ const addEmployee = async (employeeData) => {
       message: "Employee added successfully",
     });
 
-    setError(null);
+    return true; // ✅ Needed
   } catch (err) {
-    const data = err?.response?.data || err;
-    const firstError = data?.errors
-      ? Object.values(data.errors)[0][0]
-      : data?.message || "Something went wrong";
-
-    showAlert({
-      variant: "error",
-      title: "Failed",
-      message: firstError,
-    });
-
-    setError(err.message);
-    throw err;
+    console.error("Error adding employee:", err);
+    // showAlert({
+    //   variant: "error",
+    //   title: "Network Error",
+    //   message: err.message,
+    // });
+    return false; // ✅ Still needed
   }
 };
+
+
+
 
   
   
@@ -177,12 +172,32 @@ console.log("Updating employee with ID:", updatedData.profile_pic);
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        // --- IMPORTANT CHANGE HERE ---
-        // Throw the entire errorResponse object, stringified, so the component can parse it
-        throw new Error(JSON.stringify(errorResponse));
-      }
+ if (!response.ok) {
+  const errorResponse = await response.json();
+  const firstError = errorResponse?.errors
+    ? Object.values(errorResponse.errors)[0][0]
+    : errorResponse?.message || "Something went wrong";
+
+  showAlert({
+    variant: "error",
+    title: "Failed",
+    message: firstError,
+  });
+
+  return false; // ✅ This is correct
+}
+
+const newEmployee = await response.json();
+setEmployees((prev) => [...prev, newEmployee.data]);
+
+showAlert({
+  variant: "success",
+  title: "Success",
+  message: "Employee added successfully",
+});
+
+return true;
+
 
       fetchEmployees(); // Re-fetch all employees to ensure UI is up-to-date
       showAlert({ variant: "success", title: "Success", message: "Employee updated successfully" });

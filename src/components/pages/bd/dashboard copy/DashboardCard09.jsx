@@ -60,7 +60,7 @@ function DashboardCard09() {
     }, [projectStats]);
 
     return (
-        <div className="flex flex-col rounded-lg shadow-lg col-span-full sm:col-span-6 bg-white shadow-xs rounded-xl">
+        <div className="col-span-12 xl:col-span-6 bg-white/70 backdrop-blur-md shadow-xl rounded-2xl flex flex-col border border-gray-200">
             <StatCardHeader icon={Briefcase} title="Projects Over Last 6 Months" tooltip="Monthly project count from the last six months." />
             <div className="mt-10">
                 {loading ? (

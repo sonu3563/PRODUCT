@@ -58,8 +58,8 @@ function ProjectCard({ project, editProjectId, editProjectName, setEditProjectNa
                   <span className="px-3 py-2 rounded-full text-xs font-semibold bg-blue-500 text-white shadow-sm inline-block">
                     {project.project_name}
                   </span>
-                  <SyncButton 
-                  />
+                  {/* <SyncButton 
+                  /> */}
                 </div>
                 {/* <div className="flex items-center justify-between"> */}
                 <Assigned selectedProjectId={project.id} />

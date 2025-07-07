@@ -119,7 +119,7 @@ export const Roletable = () => {
             />
           </div>
           <ClearButton onClick={handleClearSearch} />
-          <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} />
+          {/* <ImportButton onClick={() => setShowImportOptions(!showImportOptions)} /> */}
           <ExportButton onClick={() => { exportToExcel(filteredRoles, "roles.xlsx"); }}
           />
         </div>

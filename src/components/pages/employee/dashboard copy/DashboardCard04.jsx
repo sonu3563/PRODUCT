@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import BarChart from '../../../charts/BarChart01';
 import { GraphContext } from '../../../context/GraphContext';
+import BarChart from '../../../charts/BarChart01';
 import { StatCardHeader } from "../../../components/CardsDashboard";
-import { Briefcase, Loader2 } from "lucide-react"; // Added Loader2 icon
+import { Briefcase, Loader2, UserPlus } from "lucide-react";
+
 // Import utilities
 import { getCssVariable } from '../Dashutils/Utils';
 
 function DashboardCard04() {
-  const { loading, error, fetchempweekhours, empweekhours } = useContext(GraphContext);
+  const { loading, error, fetchWeeklyWorkingHours, weeklyWorkingHours } = useContext(GraphContext);
 
   // Function to convert time (HH:MM) to decimal hours
   const timeToDecimal = (time) => {
@@ -17,22 +18,34 @@ function DashboardCard04() {
   };
 
   useEffect(() => {
-    fetchempweekhours(); // Fetch data when component mounts
+    fetchWeeklyWorkingHours();
   }, []);
 
-  // Log to verify if data is being fetched correctly
-  console.log("weekly hours", empweekhours);
+  console.log("weekly hours", weeklyWorkingHours);
+
+  // Calculate overall totals for display in the header/summary area
+  const totalBillableHours = weeklyWorkingHours
+    ? weeklyWorkingHours.reduce((acc, item) => acc + timeToDecimal(item.total_billable), 0)
+    : 0;
+
+  const totalNonBillableHours = weeklyWorkingHours
+    ? weeklyWorkingHours.reduce((acc, item) => acc + timeToDecimal(item.total_non_billable), 0)
+    : 0;
+  
+  const totalInhouseHours = weeklyWorkingHours
+    ? weeklyWorkingHours.reduce((acc, item) => acc + timeToDecimal(item.total_inhouse), 0)
+    : 0;
 
   // Prepare chart data if weeklyWorkingHours data is available
   const chartData = {
-    labels: (empweekhours && empweekhours.length > 0)
-      ? empweekhours.map(item => item.date)
+    labels: (weeklyWorkingHours && weeklyWorkingHours.length > 0)
+      ? weeklyWorkingHours.map(item => item.date)
       : [],
     datasets: [
       {
         label: 'Billable Hours',
-        data: (empweekhours && empweekhours.length > 0)
-          ? empweekhours.map(item => timeToDecimal(item.total_billable))
+        data: (weeklyWorkingHours && weeklyWorkingHours.length > 0)
+          ? weeklyWorkingHours.map(item => timeToDecimal(item.total_billable))
           : [],
         backgroundColor: getCssVariable('--color-sky-500'),
         hoverBackgroundColor: getCssVariable('--color-sky-600'),
@@ -42,9 +55,9 @@ function DashboardCard04() {
       },
       {
         label: 'Non-Billable Hours',
-        data: (empweekhours && empweekhours.length > 0)
-          ? empweekhours.map(item => timeToDecimal(item.total_non_billable))
-          : [],
+        data: (weeklyWorkingHours && weeklyWorkingHours.length > 0)
+        ? weeklyWorkingHours.map(item => Math.round(timeToDecimal(item.total_non_billable)))
+        : [],
         backgroundColor: getCssVariable('--color-violet-500'),
         hoverBackgroundColor: getCssVariable('--color-violet-600'),
         barPercentage: 0.7,
@@ -53,8 +66,8 @@ function DashboardCard04() {
       },
       {
         label: 'In-House Hours',
-        data: (empweekhours && empweekhours.length > 0)
-          ? empweekhours.map(item => timeToDecimal(item.total_inhouse))
+        data: (weeklyWorkingHours && weeklyWorkingHours.length > 0)
+          ? weeklyWorkingHours.map(item => timeToDecimal(item.total_inhouse))
           : [],
         backgroundColor: getCssVariable('--color-green-500'),
         hoverBackgroundColor: getCssVariable('--color-green-600'),
@@ -69,11 +82,18 @@ function DashboardCard04() {
   const hasChartData = chartData.datasets.some(dataset => dataset.data.some(val => val > 0));
 
   return (
-    <div className="flex flex-col col-span-full sm:col-span-6 xl:col-span-7 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 ease-in-out hover:shadow-2xl hover:border-blue-200">
-      <StatCardHeader icon={Briefcase} title="Weekly Status" tooltip="Displaying your weekly working hours breakdown." />
-      
+    <div className="flex flex-col col-span-full sm:col-span-6 xl:col-span-5 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 ease-in-out hover:shadow-2xl hover:border-blue-200">
+      <StatCardHeader
+        icon={UserPlus}
+        title="Billable / Non-Billable"
+        tooltip="Displaying your weekly billable and non-billable hours breakdown."
+        // Do NOT pass any custom props for numbers here as per your request
+      />
+
+
+
       {/* Content area for chart or messages */}
-      <div className="">
+      <div className="flex-grow p-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center space-y-4 text-gray-600 py-8">
             <Loader2 className="h-14 w-14 animate-spin text-gray-500" />

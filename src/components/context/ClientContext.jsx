@@ -19,61 +19,132 @@ export const ClientProvider = ({ children }) => {
     }
     return false;
   };
-  const addClient = async (clienttype, name, hiringId, contactDetail, address, companyname, communication, projectType) => {
-    setIsLoading(true);
-    setMessage("");
-    try {
-        const clientData = {
-            client_type: clienttype,
-            name,
-            contact_detail: contactDetail,
-            communication: communication,
-            project_type: projectType
-        };
 
-        if (clienttype === "Hired on Upwork") {
-            clientData.hire_on_id = hiringId;
-        } else if (clienttype === "Direct") {
-            clientData.company_address = address;
-            clientData.company_name = companyname;
-        }
+const addClient = async (
+  clienttype,
+  name,
+  hiringId,
+  // contactDetail,
+  contactEmail,
+  contactnumber,
+  address,
+  companyname,
+  communication,
+  projectType,
+) => {
+  setIsLoading(true);
+  setMessage("");
 
-        const response = await fetch(`${API_URL}/api/clients`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(clientData),
-        });
+  // ✅ Validate required fields before proceeding
+  if (!clienttype || !name || !contactEmail || !communication || !projectType ||!contactnumber ) {
+    showAlert?.({
+      variant: "warning",
+      title: "Missing Fields",
+      message: "Please fill in all required client details.",
+    });
+    setIsLoading(false);
+    return { success: false };
+  }
 
-        if (handleUnauthorized(response)) return;
+  if (clienttype === "Hired on Upwork" && !hiringId) {
+    showAlert?.({
+      variant: "warning",
+      title: "Missing Hiring ID",
+      message: "Please enter a valid hire_on_id for Upwork clients.",
+    });
+    setIsLoading(false);
+    return { success: false };
+  }
 
-        const data = await response.json();
+  if (clienttype === "Direct" && (!address || !companyname)) {
+    showAlert?.({
+      variant: "warning",
+      title: "Missing Company Info",
+      message: "Please provide company name and address for direct clients.",
+    });
+    setIsLoading(false);
+    return { success: false };
+  }
+  try {
+    const clientData = {
+      client_type: String(clienttype).trim(),
+      name: String(name).trim(),
+      client_email: String(contactEmail).trim(),
+            client_number: String(contactnumber).trim(),
+      communication: String(communication).trim(),
+      project_type: String(projectType).trim(),
+    };
 
-        if (response.ok) {
-            showAlert({ variant: "success", title: "Success", message: "Client added successfully!" });
-            fetchClients();
-            return { success: true }; // Indicate success to the component
-        } else {
-            // Check if the response is a validation error (HTTP 422)
-            if (response.status === 422 && data.errors) {
-                // Return the backend errors to the component
-                return { success: false, errors: data.errors };
-            } else {
-                // For other types of errors, show a general alert
-                showAlert({ variant: "error", title: "Error", message: data.message || "An error occurred." });
-                return { success: false, errors: {} }; // Return empty errors for non-validation errors
-            }
-        }
-    } catch (error) {
-        console.error("Error adding client:", error);
-        showAlert({ variant: "error", title: "Error", message: "An error occurred. Please try again." });
-        return { success: false, errors: {} };
-    } finally {
-        setIsLoading(false);
+    if (clienttype === "Hired on Upwork") {
+      clientData.hire_on_id = String(hiringId).trim();
+    } else if (clienttype === "Direct") {
+      clientData.company_address = String(address).trim();
+      clientData.company_name = String(companyname).trim();
     }
+
+    console.log("🚀 Sending client data:", clientData);
+
+    const response = await fetch(`${API_URL}/api/clients`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(clientData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showAlert({
+        variant: "success",
+        title: "Success",
+        message: "Client added successfully",
+      });
+      fetchClients();
+      return { success: true };
+} else {
+  if (response.status === 422 && data.errors) {
+    console.error("❌ Validation errors:", data.errors);
+
+    // ✅ First, define and format errorMessages
+    const errorMessages = Object.entries(data.errors)
+      .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+      .join("\n");
+
+    // ✅ Then use it in showAlert
+    showAlert({
+      variant: "error",
+      title: "Validation Error",
+      message: errorMessages,
+    });
+
+    return { success: false, errors: data.errors };
+  } else {
+    showAlert({
+      variant: "error",
+      title: "Error",
+      message: data.message || "An unexpected error occurred.",
+    });
+    return { success: false, errors: {} };
+  }
+}
+
+  } catch (error) {
+    console.error("❌ Error adding client:", error);
+    showAlert({
+      variant: "error",
+      title: "Error",
+      message: "Something went wrong. Please try again.",
+    });
+    return { success: false, errors: {} };
+  } finally {
+    setIsLoading(false);
+  }
 };
+
+
+
 
   const fetchClients = async () => {
     setIsLoading(true);

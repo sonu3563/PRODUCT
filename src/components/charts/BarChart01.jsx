@@ -128,7 +128,7 @@ function BarChart01({ data, width, height }) {
               label.style.fontSize = '14px';
               label.style.lineHeight = '1.25';
               const theValue = c.data.datasets[item.datasetIndex].data.reduce((a, b) => a + b, 0);
-              value.appendChild(document.createTextNode((theValue)));
+              value.appendChild(document.createTextNode(theValue.toFixed(2)));
               label.appendChild(document.createTextNode(item.text));
               li.appendChild(button);
               button.appendChild(box);

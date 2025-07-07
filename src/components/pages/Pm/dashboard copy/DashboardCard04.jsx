@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { GraphContext } from '../../../context/GraphContext';
 import BarChart from '../../../charts/BarChart01';
 import { StatCardHeader } from "../../../components/CardsDashboard";
-import { CheckCircle, XCircle, Pencil, Ban, Save, Edit, CalendarDays, Trash2, Eye, UserPlus, FolderSync, Briefcase } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 
 // Import utilities
 import { getCssVariable } from '../Dashutils/Utils';
@@ -21,10 +21,8 @@ function DashboardCard04() {
     fetchWeeklyWorkingHours(); // Fetch data when component mounts
   }, []);
 
-  // Log to verify if data is being fetched correctly
   console.log("weekly hours", weeklyWorkingHours);
 
-  // Prepare chart data if weeklyWorkingHours data is available
   const chartData = {
     labels: (weeklyWorkingHours && weeklyWorkingHours.length > 0)
       ? weeklyWorkingHours.map(item => item.date)
@@ -70,11 +68,13 @@ function DashboardCard04() {
     <div className="flex rounded-lg shadow-lg flex-col col-span-full sm:col-span-6 xl:col-span-5 bg-white shadow-xs rounded-xl">
       <StatCardHeader icon={UserPlus} title="Billable / non-billable" tooltip="Billable / non-billable Hours." />
 
-      {/* Check if data is available */}
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex flex-col items-center justify-center space-y-4 text-gray-600 py-8">
+          <Loader2 className="h-14 w-14 animate-spin text-gray-500" />
+          <span className="text-xl font-semibold">Loading working hours...</span>
+          <span className="text-base text-gray-500">Fetching billable, non-billable & in-house hours.</span>
+        </div>
       ) : (
-        // Ensure chart data is not empty before passing to BarChart
         chartData.labels.length > 0 ? (
           <BarChart data={chartData} width={595} height={248} />
         ) : (
