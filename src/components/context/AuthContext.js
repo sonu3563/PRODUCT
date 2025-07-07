@@ -39,6 +39,9 @@ export const AuthProvider = ({ children }) => {
         console.log("this is logged in user", user);
         const token = data.data.token;
         const formattedRole = user?.role?.name?.trim().toLowerCase().replace(/\s+/g, "") || "norole";
+                  const fullProfilePicUrl = user.profile_pic
+        ? `http://13.60.180.240/api/storage/profile_pics/${user.profile_pic}`
+        : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
         localStorage.setItem("userToken", token);
         localStorage.setItem("user_id", user.id);
         localStorage.setItem("user_name", formattedRole);
