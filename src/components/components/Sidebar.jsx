@@ -38,6 +38,7 @@ useEffect(() => {
   const storedImage = localStorage.getItem("profile_image_base64");
   if (storedImage) {
     setUserimage(storedImage);
+    console.log("helooo i am wigth pic",storedImage);
   }
 }, []);
 

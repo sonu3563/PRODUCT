@@ -44,6 +44,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("user_name", formattedRole);
                 localStorage.setItem("name", user.name);
         localStorage.setItem("userData", JSON.stringify(user));
+                      localStorage.setItem("profile_image_base64", fullProfilePicUrl); // <-- this line
+
         setUser(user);
         console.log(user);
         console.log("roles", formattedRole);
