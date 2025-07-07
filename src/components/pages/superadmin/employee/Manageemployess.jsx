@@ -344,7 +344,7 @@ const handleSubmit = async () => {
             <option value="email">Email</option>
             <option value="team">Department</option>
             <option value="phone_num">Phone</option>
-            {/* <option value="role">Role</option> */}
+            <option value="roles">Role</option>
           </select>
 
           <ClearButton onClick={() => setSearchQuery("")} />
@@ -478,8 +478,8 @@ const handleSubmit = async () => {
                   </td>
                   <td className="px-4 py-3 text-gray-900 text-center">{employee.name}</td>
                   <td className="px-4 py-3 text-gray-900 text-center">{employee.email}</td>
-                  <td className="px-4 py-3 text-gray-900 text-center">{employee.phone_num || "N/A"}</td>
-                  <td className="px-4 py-3 text-gray-900 text-center">{employee.team || "N/A"}</td>
+                  <td className="px-4 py-3 text-gray-900 text-center">{employee.phone_num || ""}</td>
+                  <td className="px-4 py-3 text-gray-900 text-center">{employee.team || ""}</td>
                   <td className="px-4 py-3 text-gray-900 text-center">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800">{employee.roles || "N/A"}</span>
                   </td>
