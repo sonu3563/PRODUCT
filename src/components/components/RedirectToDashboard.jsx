@@ -6,12 +6,11 @@ const RedirectToDashboard = () => {
   const userData = localStorage.getItem("userData");
   const userRole = localStorage.getItem("user_name");
 
-if (!userData || !userRole) {
-  return <Navigate to="/login" replace />;
-}
+  if (!userData || !userRole) {
+    return <Navigate to="/login" replace />;
+  }
 
-
-  return <Navigate to={`/${userRole}/dashboard`} />;
+  return <Navigate to={`/${userRole}/dashboard`} replace />;
 };
 
 export default RedirectToDashboard;

@@ -24,7 +24,6 @@ const addClient = async (
   clienttype,
   name,
   hiringId,
-  // contactDetail,
   contactEmail,
   contactnumber,
   address,
@@ -36,7 +35,7 @@ const addClient = async (
   setMessage("");
 
   // ✅ Validate required fields before proceeding
-  if (!clienttype || !name || !contactEmail || !communication || !projectType ||!contactnumber ) {
+  if (!clienttype || !name || !contactEmail || !communication || !projectType || !contactnumber) {
     showAlert?.({
       variant: "warning",
       title: "Missing Fields",
@@ -65,22 +64,26 @@ const addClient = async (
     setIsLoading(false);
     return { success: false };
   }
-  try {
-    const clientData = {
-      client_type: String(clienttype).trim(),
-      name: String(name).trim(),
-      client_email: String(contactEmail).trim(),
-            client_number: String(contactnumber).trim(),
-      communication: String(communication).trim(),
-      project_type: String(projectType).trim(),
-    };
 
-    if (clienttype === "Hired on Upwork") {
-      clientData.hire_on_id = String(hiringId).trim();
-    } else if (clienttype === "Direct") {
-      clientData.company_address = String(address).trim();
-      clientData.company_name = String(companyname).trim();
-    }
+  try {
+    // ✅ Always include optional fields as null if not provided
+const clientData = {
+  client_type: String(clienttype).trim(),
+  name: String(name).trim(),
+  client_email: String(contactEmail).trim(),
+  client_number: String(contactnumber).trim(),
+  communication: String(communication).trim(),
+  project_type: String(projectType).trim(),
+  ...(clienttype === "Hired on Upwork" 
+    ? { hire_on_id: hiringId ? String(hiringId).trim() : null }
+    : {
+        company_name: typeof companyname === "string" && companyname.trim() ? companyname.trim() : null,
+        company_address: typeof address === "string" && address.trim() ? address.trim() : null,
+      }
+  )
+};
+
+
 
     console.log("🚀 Sending client data:", clientData);
 
@@ -93,7 +96,23 @@ const addClient = async (
       body: JSON.stringify(clientData),
     });
 
-    const data = await response.json();
+    // ✅ Get raw response to catch HTML responses
+    const rawResponse = await response.text();
+    console.log("📥 Raw response text:", rawResponse);
+
+    // ✅ Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(rawResponse);
+    } catch (parseError) {
+      console.error("❌ Response is not valid JSON:", rawResponse);
+      showAlert({
+        variant: "error",
+        title: "Server Error",
+        message: "The server returned an unexpected response. Please check the server.",
+      });
+      return { success: false };
+    }
 
     if (response.ok) {
       showAlert({
@@ -103,33 +122,27 @@ const addClient = async (
       });
       fetchClients();
       return { success: true };
-} else {
-  if (response.status === 422 && data.errors) {
-    console.error("❌ Validation errors:", data.errors);
+    } else if (response.status === 422 && data.errors) {
+      console.error("❌ Validation errors:", data.errors);
+      const errorMessages = Object.entries(data.errors)
+        .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+        .join("\n");
 
-    // ✅ First, define and format errorMessages
-    const errorMessages = Object.entries(data.errors)
-      .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
-      .join("\n");
+      showAlert({
+        variant: "error",
+        title: "Validation Error",
+        message: errorMessages,
+      });
 
-    // ✅ Then use it in showAlert
-    showAlert({
-      variant: "error",
-      title: "Validation Error",
-      message: errorMessages,
-    });
-
-    return { success: false, errors: data.errors };
-  } else {
-    showAlert({
-      variant: "error",
-      title: "Error",
-      message: data.message || "An unexpected error occurred.",
-    });
-    return { success: false, errors: {} };
-  }
-}
-
+      return { success: false, errors: data.errors };
+    } else {
+      showAlert({
+        variant: "error",
+        title: "Error",
+        message: data.message || "An unexpected error occurred.",
+      });
+      return { success: false, errors: {} };
+    }
   } catch (error) {
     console.error("❌ Error adding client:", error);
     showAlert({
@@ -142,6 +155,7 @@ const addClient = async (
     setIsLoading(false);
   }
 };
+
 
 
 
