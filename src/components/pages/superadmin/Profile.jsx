@@ -42,16 +42,16 @@ const Profile = () => {
   }, [profile]);
   
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (isEditable) {
-      setProfileData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-    fetchProfile();
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  if (isEditable) {
+    setProfileData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
+
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -84,7 +84,7 @@ const handleSubmit = async (e) => {
 
     localStorage.setItem("name", profileData.name);
 
-    // If a new image was selected, store it in localStorage as Base64
+    // Save image to localStorage if changed
     if (profileData.imageFile) {
       const reader = new FileReader();
       reader.onloadend = function () {
@@ -93,13 +93,18 @@ const handleSubmit = async (e) => {
       reader.readAsDataURL(profileData.imageFile);
     }
 
-    // Optionally: show a success message
-    // alert('Profile updated successfully!');
+    // ✅ Close edit mode
+    setIsEditable(false);
+
+    // ✅ Refresh profile from backend
+    await fetchProfile();
+
   } catch (error) {
     console.error('Failed to update profile:', error);
     alert('Something went wrong!');
   }
 };
+
 
   useEffect(() => {
     fetchProfile();
@@ -219,45 +224,64 @@ const handleSubmit = async (e) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleChange}
-                      placeholder="+1 (555) 000-0000"
-                      readOnly={!isEditable}
-                      className={`w-full px-4 py-3 rounded-xl border ${
-                        isEditable
-                          ? 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 bg-gray-50 focus:bg-white'
-                          : 'border-gray-200 bg-gray-100 text-gray-600'
-                      } transition-all duration-200`}
-                    />
-                  </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="space-y-2">
+    <label className="block text-sm font-semibold text-gray-700">
+      Phone Number
+    </label>
+    <input
+      type="tel"
+      name="phone"
+      value={profileData.phone}
+      onChange={(e) => {
+        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        if (value.length <= 10 && isEditable) {
+          setProfileData((prev) => ({
+            ...prev,
+            phone: value,
+          }));
+        }
+      }}
+      placeholder="(555) 000-0000"
+      readOnly={!isEditable}
+      maxLength={10}
+      className={`w-full px-4 py-3 rounded-xl border ${
+        isEditable
+          ? 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 bg-gray-50 focus:bg-white'
+          : 'border-gray-200 bg-gray-100 text-gray-600'
+      } transition-all duration-200`}
+    />
+  </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Emergency Contact
-                    </label>
-                    <input
-                      type="tel"
-                      name="emergencyPhone"
-                      value={profileData.emergencyPhone}
-                      onChange={handleChange}
-                      placeholder="+1 (555) 000-0000"
-                      readOnly={!isEditable}
-                      className={`w-full px-4 py-3 rounded-xl border ${
-                        isEditable
-                          ? 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 bg-gray-50 focus:bg-white'
-                          : 'border-gray-200 bg-gray-100 text-gray-600'
-                      } transition-all duration-200`}
-                    />
-                  </div>
-                </div>
+  <div className="space-y-2">
+    <label className="block text-sm font-semibold text-gray-700">
+      Emergency Contact
+    </label>
+    <input
+      type="tel"
+      name="emergencyPhone"
+      value={profileData.emergencyPhone}
+      onChange={(e) => {
+        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        if (value.length <= 10 && isEditable) {
+          setProfileData((prev) => ({
+            ...prev,
+            emergencyPhone: value,
+          }));
+        }
+      }}
+      placeholder="(555) 000-0000"
+      readOnly={!isEditable}
+      maxLength={10}
+      className={`w-full px-4 py-3 rounded-xl border ${
+        isEditable
+          ? 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 bg-gray-50 focus:bg-white'
+          : 'border-gray-200 bg-gray-100 text-gray-600'
+      } transition-all duration-200`}
+    />
+  </div>
+</div>
+
 
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700">Address</label>
