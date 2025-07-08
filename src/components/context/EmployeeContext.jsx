@@ -127,6 +127,8 @@ const addEmployee = async (employeeData) => {
     //   message: err.message,
     // });
     return false; // ✅ Still needed
+  }finally{
+    fetchEmployees();
   }
 };
 
