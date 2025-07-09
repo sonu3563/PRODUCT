@@ -120,7 +120,6 @@ const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && hasR
             path="/admin/dashboard"
             element={<RoleBasedRoute element={<AdminDashboard />} allowedRoles={["admin"]} />}
           />
-<Route path="/" element={<RedirectToDashboard />} />
 
           <Route
             path="/superadmin/dashboard"
@@ -403,6 +402,37 @@ const shouldShowSidebar = !hideSidebarRoutes.includes(location.pathname) && hasR
                 </LeaveProvider>
             }
           />
+
+
+          {/*  */}
+
+   <Route
+            path="/billingmanager/leaves"
+            element={
+              <LeaveProvider>
+                <RoleBasedRoute element={<LeaveForm/>} allowedRoles={["billingmanager"]} />
+                </LeaveProvider>
+            }
+          />
+
+     <Route
+            path="/projectmanager/leaves"
+            element={
+              <LeaveProvider>
+                <RoleBasedRoute element={<LeaveForm/>} allowedRoles={["projectmanager"]} />
+                </LeaveProvider>
+            }
+          />
+       <Route
+            path="/tl/leaves"
+            element={
+              <LeaveProvider>
+                <RoleBasedRoute element={<LeaveForm/>} allowedRoles={["tl"]} />
+                </LeaveProvider>
+            }
+          />
+
+          {/*  */}
 
           <Route
             path="/tl/performance-sheets"

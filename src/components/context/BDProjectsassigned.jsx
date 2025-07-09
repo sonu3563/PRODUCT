@@ -126,6 +126,7 @@ const fetchPerformanceDetails = async () => {
       },
     });
     setPerformanceData(response.data.data);
+    console.log("dataaaaaaaa",response.data.data)
   } catch (error) {
     console.error("Error fetching performance details:", error);
   } finally {

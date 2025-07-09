@@ -5,7 +5,7 @@ import { exportToExcel } from "../../../components/excelUtils";
 import { SectionHeader } from '../../../components/SectionHeader';
 import { EditButton, SaveButton, CancelButton, DeleteButton, ExportButton, ImportButton, ClearButton, IconApproveButton, IconRejectButton, YesterdayButton, TodayButton, WeeklyButton, CustomButton, IconCancelTaskButton, IconSaveButton, IconDeleteButton, IconEditButton, IconViewButton } from "../../../AllButtons/AllButtons";
 import { usePMContext } from "../../../context/PMContext";
-
+// import { useBDProjectsAssigned } from "../../../context/BDProjectsassigned";
 export const Managesheets = () => {
   const { performanceData, fetchPerformanceDetails, isLoading, approvePerformanceSheet, rejectPerformanceSheet } = useBDProjectsAssigned();
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,6 +13,7 @@ export const Managesheets = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [editMode, setEditMode] = useState({});
+  // const {approvePerformanceSheet}
   const [showPopup, setShowPopup] = useState(false);
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,7 +66,7 @@ useEffect(() => {
   const role = localStorage.getItem("user_name");
   setUserRole(role);
 
-  if (role === "superadmin") {
+  if (role === "superadmin" || role === "billingmanager" ) {
     fetchPerformanceDetails();
   } else {
     getPerformanceDetails();
@@ -76,36 +77,56 @@ useEffect(() => {
 
 
   const toggleEditMode = (id) => {
+
+    console.log("idddddd",id);
     setEditMode((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 useEffect(() => {
-const isSuperAdmin = userRole === "superadmin";
-const dataToUse = isSuperAdmin ? performanceData : pmperformanceData;
-
-
+  const isPrivilegedUser = userRole === "superadmin" || userRole === "billingmanager";
+  const dataToUse = isPrivilegedUser ? performanceData : pmperformanceData;
   const dataReady = Array.isArray(dataToUse) && dataToUse.length > 0;
+
+  console.log("🔍 Role:", userRole);
+  console.log("✅ Using data:", isPrivilegedUser ? "performanceData" : "pmperformanceData");
+  console.log("📦 Raw Data:", dataToUse);
+
   if (!dataReady) {
+    console.log("❌ Data is not ready or empty");
     setFilteredData([]);
     return;
   }
 
-  let filtered;
+  let filtered = [];
 
-  if (isSuperAdmin) {
-    // 🧩 Superadmin data has nested sheets
-    filtered = dataToUse.flatMap(user =>
-      (user?.sheets || []).map(sheet => ({
-        ...sheet,
-        user_name: user.user_name,
-      }))
+  if (isPrivilegedUser) {
+    console.log("🔐 Privileged user branch");
+
+    filtered = dataToUse.flatMap((user) =>
+      (user?.sheets || []).map((sheet, idx) => {
+        console.log(`📄 [Privileged] Sheet ${idx} for ${user.user_name}:`, sheet);
+        return {
+          ...sheet,
+          user_name: user.user_name,
+          id: sheet?.id ?? `${user.user_name}_${sheet?.date ?? "nodate"}`,
+        };
+      })
     );
   } else {
-    // 🧩 PM data is already flat
-    filtered = dataToUse.map(sheet => ({
-      ...sheet,
-      user_name: sheet.user_name, // Already has user_name in sheet
-    }));
+    console.log("👤 Regular user branch");
+
+    filtered = dataToUse.flatMap((pm, pmIdx) =>
+      (pm?.sheets || []).map((sheet, sheetIdx) => {
+        console.log(`📄 [PM] Sheet ${sheetIdx} for ${pm.user_name}:`, sheet);
+        return {
+          ...sheet,
+          user_name: pm.user_name,
+          id: sheet?.id ?? `${pm.user_name}_${sheet?.date ?? "nodate"}`,
+        };
+      })
+    );
   }
+
+  console.log("🧪 After flattening:", filtered);
 
   // 🗓️ Date Filter
   if (startDate && endDate) {
@@ -114,21 +135,36 @@ const dataToUse = isSuperAdmin ? performanceData : pmperformanceData;
     const startStr = start.toISOString().split("T")[0];
     const endStr = end.toISOString().split("T")[0];
 
-    filtered = filtered.filter(sheet => {
-      if (!sheet.date) return false;
+    filtered = filtered.filter((sheet) => {
+      if (!sheet?.date) {
+        console.log("⚠️ Skipping sheet without date:", sheet);
+        return false;
+      }
       const sheetDateStr = sheet.date.split("T")[0];
-      return sheetDateStr >= startStr && sheetDateStr <= endStr;
+      const isInRange = sheetDateStr >= startStr && sheetDateStr <= endStr;
+      if (!isInRange) {
+        console.log("📅 Skipping out-of-range date:", sheetDateStr);
+      }
+      return isInRange;
     });
   }
+
+  console.log("🔍 After date filtering:", filtered);
 
   // 🔍 Search Filter
   const trimmedSearchQuery = searchQuery?.trim().toLowerCase();
   if (trimmedSearchQuery) {
-    filtered = filtered.filter(sheet => {
-      const value = (sheet[filterBy] || "").toLowerCase();
-      return value.includes(trimmedSearchQuery);
+    filtered = filtered.filter((sheet) => {
+      const value = (sheet?.[filterBy] || "").toLowerCase();
+      const match = value.includes(trimmedSearchQuery);
+      if (!match) {
+        console.log(`🔎 No match for "${trimmedSearchQuery}" in`, value);
+      }
+      return match;
     });
   }
+
+  console.log("✅ Final Filtered Data:", filtered);
 
   setFilteredData(filtered);
 }, [
@@ -140,6 +176,11 @@ const dataToUse = isSuperAdmin ? performanceData : pmperformanceData;
   pmperformanceData,
   userRole,
 ]);
+
+
+
+
+
 
 
 
@@ -159,25 +200,38 @@ const dataToUse = isSuperAdmin ? performanceData : pmperformanceData;
     }
   };
 
-  const handleSelectAll = () => {
-    const allSheets = searchTerm ? filteredData : performanceData.flatMap(user => user.sheets);
+// Helper to get the right sheets depending on search and user role
+const getActiveSheets = () => {
+  if (searchTerm) {
+    return filteredData;
+  }
 
-    if (selectedRows.length === allSheets.length) {
-      setSelectedRows([]); // Deselect all
-    } else {
-      const allSelectedIds = allSheets.map(sheet => sheet.id);
-      setSelectedRows(allSelectedIds);
-    }
-  };
+  return userRole === 'PM'
+    ? pmperformanceData.flatMap(pm => pm.sheets)
+    : performanceData.flatMap(user => user.sheets);
+};
 
+// Select All toggle logic
+const handleSelectAll = () => {
+  const allSheets = getActiveSheets();
 
-  const handleRowSelect = (id) => {
-    setSelectedRows((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((rowId) => rowId !== id)
-        : [...prevSelected, id]
-    );
-  };
+  if (selectedRows.length === allSheets.length) {
+    setSelectedRows([]); // Deselect all
+  } else {
+    const allSelectedIds = allSheets.map(sheet => sheet.id);
+    setSelectedRows(allSelectedIds); // Select all
+  }
+};
+
+// Individual row select toggle
+const handleRowSelect = (id) => {
+  setSelectedRows((prevSelected) =>
+    prevSelected.includes(id)
+      ? prevSelected.filter((rowId) => rowId !== id)
+      : [...prevSelected, id]
+  );
+};
+
   const allSheets = searchTerm ? filteredData : performanceData.flatMap(user => user.sheets);
   const isDateFiltered = filteredData.length > 0;
 
@@ -518,7 +572,9 @@ const totalPages = Math.ceil(
   </span>
 </div>
                           <button
-                            onClick={() => toggleEditMode(sheet.id)}
+                            onClick={() => {
+                             
+                              toggleEditMode(sheet.id)}}
                             className="relative group hover:scale-110 transition"
                           >
                             <Pencil className="text-blue-600 h-6 w-6 hover:text-blue-700" />
@@ -542,7 +598,7 @@ const totalPages = Math.ceil(
   </span>
 </div>
                           <button
-                            onClick={() => toggleEditMode(sheet.id)}
+                            // onClick={() => toggleEditMode(sheet.id)}
                             className="relative group hover:scale-110 transition"
                           >
                             <Pencil className="text-blue-600 h-6 w-6 hover:text-blue-700" />

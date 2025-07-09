@@ -71,6 +71,7 @@ useEffect(() => {
 
       { name: "Project Assigned", path: "/billingmanager/projects-assigned", icon: <FileSpreadsheet />  },
       { name: "Manage Sheets", path: "/billingmanager/Manage-sheets", icon: <FileChartLine />},
+                  { name: "Leaves", path: "/billingmanager/leaves",icon: <CalendarHeart />  },
 
     ],
     [Roles.HR]: [
@@ -78,6 +79,7 @@ useEffect(() => {
       { name: "Employee Management", path: "/hr/employees", icon: <ContactRound /> },
       { name: "Leave Management", path: "/hr/leaves",icon: <CalendarCheck /> },
       { name: "Teams", path: "/hr/teams", icon: <Users /> },
+      
       // { name: "Accessory category", path: "/hr/accessory/category",icon: <CalendarCheck /> },
       // { name: "Accessories assign", path: "/hr/accessories/assign",icon: <CalendarCheck /> },
     ],
@@ -87,6 +89,8 @@ useEffect(() => {
       { name: "Project Management", path: "/projectmanager/assign", icon: <FolderGit2 /> },
       { name: "Performance Sheets", path: "/projectmanager/performance-sheets", icon: <FileChartLine /> },
       { name: "Manage Leaves", path: "/projectmanager/manage-leaves", icon: <CalendarCog /> },
+                  { name: "Leaves", path: "/projectmanager/leaves",icon: <CalendarHeart />  },
+
     ],
      [Roles.TL]: [
       { name: "Dashboard", path: "/tl/dashboard", icon: <House /> },
@@ -94,6 +98,8 @@ useEffect(() => {
       { name: "Project Management", path: "/tl/assign", icon: <FolderGit2 /> },
       { name: "Performance Sheets", path: "/tl/performance-sheets", icon: <FileChartLine /> },
       { name: "Manage Leaves", path: "/tl/manage-leaves", icon: <CalendarCog /> },
+            { name: "Leaves", path: "/tl/leaves",icon: <CalendarHeart />  },
+
     ],
     [Roles.TEAM]: [
       { name: "Dashboard", path: "/team/dashboard", icon: <House /> },

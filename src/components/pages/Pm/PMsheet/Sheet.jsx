@@ -26,7 +26,7 @@ export const Sheet = () => {
 
     return (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md shadow-black/25">
-            <SectionHeader icon={BarChart} title="Manage Performance Sheet" subtitle="Track and manage performance sheets over time" />
+            <SectionHeader icon={BarChart} title="Manage Performance Sheet22" subtitle="Track and manage performance sheets over time" />
 
             <div className="p-4 flex items-center gap-3">
                 <div className="relative w-full max-w-md">

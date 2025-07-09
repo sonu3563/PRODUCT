@@ -262,7 +262,7 @@ export const EmpSheetHistory = () => {
       </div>
 
       <div className="max-w-full overflow-x-auto">
-        <div className="min-w-[1102px] ">
+        <div className="relative z-10">
           <table className="w-full border-collapse">
             <thead>
               <tr className="table-bg-heading">
@@ -270,11 +270,11 @@ export const EmpSheetHistory = () => {
                   { label: "Date", icon: Calendar },
                   { label: "Client Name", icon: User },
                   { label: "Project Name", icon: Briefcase },
-                  { label: "Work Type", icon: Target },
+                  // { label: "Work Type", icon: Target },
                   { label: "Activity", icon: Clock },
                   { label: "Time", icon: Clock },
                   { label: "Project Type", icon: Clock },
-                  { label: "Project Type Status", icon: Clock },
+                  // { label: "Project Type Status", icon: Clock },
                   { label: "Narration", icon: FileText },
                   { label: "Status", icon: CheckCircle },
                 ].map(({ label, icon: Icon }, index) => (
@@ -313,9 +313,9 @@ export const EmpSheetHistory = () => {
                       {sheet.project_name}
                     </td>
 
-                    <td className="px-6 py-4 text-nowrap text-center">
+                    {/* <td className="px-6 py-4 text-nowrap text-center">
                       {sheet.work_type}
-                    </td>
+                    </td> */}
 
                     <td className="px-6 py-4 text-nowrap text-center">
                        <span className={ActivityTypeStatus(sheet.activity_type)}>{sheet.activity_type}</span>
@@ -329,9 +329,9 @@ export const EmpSheetHistory = () => {
                       {sheet.project_type === "Hourly" ? <span className="bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20 px-2 py-1 rounded-full text-xs font-medium">{sheet.project_type}</span> : <span className="bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 px-2 py-1 rounded-full text-xs font-medium">{sheet.project_type}</span>}
                     </td>
 
-                    <td className="px-6 py-4 text-nowrap text-center">
+                    {/* <td className="px-6 py-4 text-nowrap text-center">
                       {sheet.project_type_status}
-                    </td>
+                    </td> */}
 
                     <td className="px-6 py-4 text-nowrap text-center relative">
                       <div className="relative inline-block max-w-[150px] group">
@@ -342,7 +342,7 @@ export const EmpSheetHistory = () => {
                             {/* Default fallback */}
                           </span>
                           {sheet.narration && sheet.narration.length > 7 && (
-                            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-auto max-w-[300px] bg-gray-100 text-black text-sm rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 whitespace-pre-wrap break-words pointer-events-none invisible group-hover:visible">
+                            <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 w-auto max-w-[300px] bg-gray-100 text-black text-sm rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 whitespace-pre-wrap break-words pointer-events-none invisible group-hover:visible">
                               {sheet.narration || "NA"}
                             </div>
                           )}

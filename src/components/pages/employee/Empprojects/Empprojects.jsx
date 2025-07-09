@@ -85,8 +85,8 @@ function App() {
   return (
     <>
       <SectionHeader icon={BarChart} title="Projects Assigned" subtitle="Track and manage your assigned projects efficiently with our intuitive dashboard." />
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-screen-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {Array.isArray(userassignedProjects) && userassignedProjects.length > 0 ? (
             userassignedProjects.map(project => <ProjectCard key={project.id} project={project} />)
