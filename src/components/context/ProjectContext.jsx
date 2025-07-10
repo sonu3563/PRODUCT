@@ -24,7 +24,7 @@ export const ProjectProvider = ({ children }) => {
     setIsLoading(true);
     setMessage("");
     const requestBody = {
-      sales_team_id: parseInt(userId),
+      sales_team_id: "2",
       client_id: parseInt(clientId),
       project_name: projectName,
       tags_activitys: tags_activitys,

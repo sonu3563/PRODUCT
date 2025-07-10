@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Loader2, BarChart, Search, CheckCircle, XCircle, Clock, Calendar, User, FileText, X, Edit } from "lucide-react";
 import { useLeave } from "../../context/LeaveContext";
 import { SectionHeader } from '../../components/SectionHeader';
-import { IconApproveButton, IconRejectButton } from "../../../components/AllButtons/AllButtons";
+import { IconApproveButton, IconRejectButton ,IconCancelTaskButton} from "../../../components/AllButtons/AllButtons";
 import Pagination from "../../../components/components/Pagination";
 
 // Define a simple Modal component internally for displaying full leave details
@@ -321,6 +321,14 @@ export const LeaveManagement = () => {
                                                         whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded
                                                         opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
                                                             Reject
+                                                    </span>
+                                                </div>
+                                                 <div className="relative group">
+                                                    <IconCancelTaskButton onClick={() => setEditMode("")} />
+                                                    <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2
+                                                        whitespace-nowrap bg-white text-black text-sm px-2 py-1 rounded
+                                                        opacity-0 group-hover:opacity-100 transition pointer-events-none shadow">
+                                                            Cancel
                                                     </span>
                                                 </div>
                                             </div>
